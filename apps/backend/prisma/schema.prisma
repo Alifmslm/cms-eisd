@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Event {
+  id                 String    @id @default(uuid())
+  slug               String    @unique
+  title              String
+  previewDescription String
+  content            String
+  coverImage         String
+  headerImage        String
+  galleryImages      String[]
+  location           String
+  startDate          DateTime
+  endDate            DateTime
+  publishedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([startDate])
+  @@index([publishedAt])
+}
+
+model MediumArticle {
+  id            String    @id @default(uuid())
+  url           String    @unique
+  title         String
+  description   String
+  coverImage    String
+  publishedDate DateTime
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([url])
+  @@index([publishedAt])
+}
