@@ -21,6 +21,7 @@ export class AuthController {
     const user = await this.authService.validateUser(loginDto.username, loginDto.password);
     session.userId = user.id;
     session.username = user.username;
+    session.role = user.role;
     return { user };
   }
 
@@ -40,6 +41,6 @@ export class AuthController {
     if (!session.userId) {
       return { user: null };
     }
-    return { user: { id: session.userId, username: session.username } };
+    return { user: { id: session.userId, username: session.username, role: session.role } };
   }
 }
