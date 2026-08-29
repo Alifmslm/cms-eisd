@@ -44,3 +44,33 @@ Currently in the **V1 planning stage**. V1 scope covers Authentication, Dashboar
 The core principle across every version of this project: **keep V1 simple and fast to finish, but shape all data structures so future versions (Gallery expansion, organizational content, governance features, AI tooling) can be added without major migrations.**
 
 Technology stack decisions are intentionally excluded from this documentation for now and will be addressed separately.
+
+## User Roles
+
+The CMS supports two user roles:
+
+### Admin Role
+- Full CRUD access to all content (events, articles)
+- Can create, edit, and delete content
+- Can publish and unpublish content
+- Can manage user roles
+
+### User Role
+- Read-only access to the dashboard
+- Can view all content but cannot modify it
+- Edit/delete buttons are hidden in the UI
+- Write API endpoints return 403 Forbidden
+
+### Default Credentials
+The seed script creates a default admin account:
+```
+username: admin
+password: admin123
+```
+
+### Role-Based API Access
+- **Read endpoints** (GET): Accessible by all authenticated users
+- **Write endpoints** (POST, PUT, DELETE): Restricted to admin role only
+
+### Session Management
+After login, the user's role is stored in the session and checked on every request. The frontend uses the role to conditionally render UI elements.

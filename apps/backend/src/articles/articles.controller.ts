@@ -8,15 +8,20 @@ import {
   Param,
   Query,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto, UpdateArticleDto } from './dto';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('api/articles')
+@UseGuards(RolesGuard)
 export class ArticlesController {
   constructor(private articlesService: ArticlesService) {}
 
   @Post()
+  @Roles('admin')
   @HttpCode(201)
   async create(@Body() createArticleDto: CreateArticleDto) {
     return this.articlesService.create(createArticleDto);
@@ -36,23 +41,27 @@ export class ArticlesController {
   }
 
   @Put(':id')
+  @Roles('admin')
   async update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articlesService.update(id, updateArticleDto);
   }
 
   @Post(':id/publish')
+  @Roles('admin')
   @HttpCode(200)
   async publish(@Param('id') id: string) {
     return this.articlesService.publish(id);
   }
 
   @Post(':id/unpublish')
+  @Roles('admin')
   @HttpCode(200)
   async unpublish(@Param('id') id: string) {
     return this.articlesService.unpublish(id);
   }
 
   @Delete(':id')
+  @Roles('admin')
   @HttpCode(204)
   async remove(@Param('id') id: string) {
     await this.articlesService.remove(id);

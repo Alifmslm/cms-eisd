@@ -17,13 +17,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return { id: user.id, username: user.username };
+    return { id: user.id, username: user.username, role: user.role };
   }
 
-  async createUser(username: string, password: string) {
+  async createUser(username: string, password: string, role: 'admin' | 'user' = 'user') {
     const passwordHash = await bcrypt.hash(password, 10);
     return this.prisma.user.create({
-      data: { username, passwordHash },
+      data: { username, passwordHash, role },
     });
   }
 }
