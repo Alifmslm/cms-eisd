@@ -7,8 +7,8 @@
 
 ## 2. Database Schema
 
-- [ ] 2.1 Design and implement User schema with id, username, passwordHash, createdAt fields and verify migration runs
-- [ ] 2.2 Design and implement Event schema with all required fields (title, slug, content, images, dates, etc.) and verify migration runs
+- [x] 2.1 Design and implement User schema with id, username, passwordHash, createdAt fields and verify migration runs
+- [x] 2.2 Design and implement Event schema with all required fields (title, slug, content, images, dates, etc.) and verify migration runs
 - [ ] 2.3 Design and implement MediumArticle schema with all required fields (url, title, description, etc.) and verify migration runs
 - [ ] 2.4 Create seed script for default admin account and verify admin can be created
 
