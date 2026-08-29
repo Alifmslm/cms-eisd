@@ -1,26 +1,68 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class StorageService {
-  private bucketName = process.env.R2_BUCKET_NAME || 'cms-eisd';
-  private accountId = process.env.CLOUDFLARE_ACCOUNT_ID || '';
-  private accessKeyId = process.env.R2_ACCESS_KEY_ID || '';
-  private secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || '';
+  private s3Client: S3Client;
+  private bucketName: string;
+  private publicUrl: string;
+
+  constructor() {
+    this.bucketName = process.env.R2_BUCKET_NAME || 'cms-eisd';
+    this.publicUrl = process.env.R2_PUBLIC_URL || '';
+
+    this.s3Client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+      },
+    });
+  }
 
   async uploadImage(file: Express.Multer.File): Promise<string> {
     this.validateFile(file);
-    
+
     const key = `uploads/${uuidv4()}-${file.originalname}`;
-    
-    // TODO: Implement actual R2 upload using AWS SDK S3 compatible API
-    // For now, return a placeholder URL
-    return `https://${this.bucketName}.${this.accountId}.r2.cloudflarestorage.com/${key}`;
+
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        }),
+      );
+
+      return `${this.publicUrl}/${key}`;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to upload image to R2');
+    }
   }
 
   async deleteImage(url: string): Promise<void> {
-    // TODO: Implement actual R2 deletion
-    console.log(`Would delete: ${url}`);
+    const key = this.extractKeyFromUrl(url);
+    if (!key) return;
+
+    try {
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+    } catch (error) {
+      // Log but don't throw — deletion failure shouldn't block content operations
+      console.error('Failed to delete image from R2:', error);
+    }
+  }
+
+  private extractKeyFromUrl(url: string): string | null {
+    if (!this.publicUrl || !url.startsWith(this.publicUrl)) return null;
+    return url.slice(this.publicUrl.length + 1); // +1 for the trailing slash
   }
 
   private validateFile(file: Express.Multer.File): void {
