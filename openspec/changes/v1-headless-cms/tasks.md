@@ -21,10 +21,10 @@
 
 ## 4. Backend - Event Management
 
-- [ ] 4.1 Implement event CRUD endpoints (create, read, update, delete) and verify each operation works
-- [ ] 4.2 Implement automatic slug generation from title with uniqueness check and verify slug is created correctly
-- [ ] 4.3 Implement event status computation from start/end dates and verify Incoming/On Going/Finished status
-- [ ] 4.4 Implement Draft/Publish workflow with publishedAt timestamp and verify status transitions
+- [x] 4.1 Implement event CRUD endpoints (create, read, update, delete) and verify each operation works
+- [x] 4.2 Implement automatic slug generation from title with uniqueness check and verify slug is created correctly
+- [x] 4.3 Implement event status computation from start/end dates and verify Incoming/On Going/Finished status
+- [x] 4.4 Implement Draft/Publish workflow with publishedAt timestamp and verify status transitions
 
 ## 5. Backend - Medium Article Management
 
