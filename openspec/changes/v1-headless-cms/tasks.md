@@ -14,10 +14,10 @@
 
 ## 3. Backend - Authentication
 
-- [ ] 3.1 Implement login endpoint with username/password validation and bcrypt comparison and verify login works
-- [ ] 3.2 Implement session management with express-session and verify session persistence across requests
-- [ ] 3.3 Implement logout endpoint that invalidates session and verify session is destroyed
-- [ ] 3.4 Implement auth guard for protected routes and verify unauthenticated access is blocked
+- [x] 3.1 Implement login endpoint with username/password validation and bcrypt comparison and verify login works
+- [x] 3.2 Implement session management with express-session and verify session persistence across requests
+- [x] 3.3 Implement logout endpoint that invalidates session and verify session is destroyed
+- [x] 3.4 Implement auth guard for protected routes and verify unauthenticated access is blocked
 
 ## 4. Backend - Event Management
 

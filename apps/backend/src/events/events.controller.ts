@@ -15,6 +15,7 @@ import { CreateEventDto, UpdateEventDto } from './dto';
 import { IsString, IsOptional } from 'class-validator';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { AuthenticatedGuard } from '../auth/authenticated.guard';
 
 class FindBySlugDto {
   @IsString()
@@ -22,7 +23,7 @@ class FindBySlugDto {
 }
 
 @Controller('api/events')
-@UseGuards(RolesGuard)
+@UseGuards(AuthenticatedGuard, RolesGuard)
 export class EventsController {
   constructor(private eventsService: EventsService) {}
 
