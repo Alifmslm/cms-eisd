@@ -3,9 +3,36 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto, UpdateEventDto } from './dto';
 import * as slug from 'slug';
 
+export type EventStatus = 'Incoming' | 'On Going' | 'Finished';
+
 @Injectable()
 export class EventsService {
   constructor(private prisma: PrismaService) {}
+
+  computeEventStatus(
+    startDate: string | Date,
+    endDate: string | Date,
+    now: Date = new Date(),
+  ): EventStatus {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (now < start) {
+      return 'Incoming';
+    }
+    if (now >= start && now <= end) {
+      return 'On Going';
+    }
+    return 'Finished';
+  }
+
+  private withStatus<T extends { startDate: Date; endDate: Date }>(event: T): T & { status: EventStatus } {
+    return { ...event, status: this.computeEventStatus(event.startDate, event.endDate) };
+  }
+
+  private withStatusList<T extends { startDate: Date; endDate: Date }>(events: T[]): (T & { status: EventStatus })[] {
+    return events.map((event) => this.withStatus(event));
+  }
 
   private generateSlug(title: string): string {
     return slug(title, { lower: true });
@@ -45,16 +72,18 @@ export class EventsService {
   }
 
   async findAll() {
-    return this.prisma.event.findMany({
+    const events = await this.prisma.event.findMany({
       orderBy: { updatedAt: 'desc' },
     });
+    return this.withStatusList(events);
   }
 
   async findPublished() {
-    return this.prisma.event.findMany({
+    const events = await this.prisma.event.findMany({
       where: { publishedAt: { not: null } },
       orderBy: { startDate: 'asc' },
     });
+    return this.withStatusList(events);
   }
 
   async findBySlug(slug: string) {
@@ -62,7 +91,7 @@ export class EventsService {
     if (!event) {
       throw new NotFoundException(`Event with slug "${slug}" not found`);
     }
-    return event;
+    return this.withStatus(event);
   }
 
   async update(id: string, updateEventDto: UpdateEventDto) {
