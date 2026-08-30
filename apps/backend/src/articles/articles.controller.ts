@@ -14,9 +14,10 @@ import { ArticlesService } from './articles.service';
 import { CreateArticleDto, UpdateArticleDto } from './dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { AuthenticatedGuard } from '../auth/authenticated.guard';
 
 @Controller('api/articles')
-@UseGuards(RolesGuard)
+@UseGuards(AuthenticatedGuard, RolesGuard)
 export class ArticlesController {
   constructor(private articlesService: ArticlesService) {}
 

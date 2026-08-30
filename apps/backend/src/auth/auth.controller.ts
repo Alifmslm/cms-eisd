@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Session, Get, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Session, Get, HttpCode, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { IsString, MinLength } from 'class-validator';
 
@@ -25,14 +25,28 @@ export class AuthController {
     return { user };
   }
 
+  @Get('csrf-token')
+  getCsrfToken(@Req() req: any) {
+    return { csrfToken: req.csrfToken() };
+  }
+
   @Post('logout')
   @HttpCode(200)
   async logout(@Session() session: Record<string, any>) {
-    session.destroy((err: any) => {
-      if (err) {
-        throw err;
-      }
+    if (!session) {
+      return { message: 'Logged out successfully' };
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      session.destroy((err: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
+
     return { message: 'Logged out successfully' };
   }
 

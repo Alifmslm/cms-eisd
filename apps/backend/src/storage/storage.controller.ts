@@ -5,11 +5,14 @@ import {
   UseInterceptors,
   Body,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './storage.service';
+import { AuthenticatedGuard } from '../auth/authenticated.guard';
 
 @Controller('api/storage')
+@UseGuards(AuthenticatedGuard)
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
