@@ -34,9 +34,9 @@
 
 ## 6. Backend - Image Storage
 
-- [ ] 6.1 Implement R2 upload service with multipart handling and verify images are stored in R2
-- [ ] 6.2 Implement image validation (aspect ratio, file size) and verify invalid images are rejected
-- [ ] 6.3 Implement image deletion from R2 when content is deleted and verify orphaned images are removed
+- [x] 6.1 Implement R2 upload service with multipart handling and verify images are stored in R2
+- [x] 6.2 Implement image validation (aspect ratio, file size) and verify invalid images are rejected
+- [x] 6.3 Implement image deletion from R2 when content is deleted and verify orphaned images are removed
 
 ## 7. Backend - Public API
 

@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto, UpdateEventDto } from './dto';
+import { StorageService } from '../storage/storage.service';
 import * as slug from 'slug';
 
 export type EventStatus = 'Incoming' | 'On Going' | 'Finished';
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
 
   computeEventStatus(
     startDate: string | Date,
@@ -148,6 +152,16 @@ export class EventsService {
     const existing = await this.prisma.event.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException(`Event with id "${id}" not found`);
+    }
+
+    const imageUrls = [
+      existing.coverImage,
+      existing.headerImage,
+      ...existing.galleryImages,
+    ].filter((url) => url && url.length > 0);
+
+    if (imageUrls.length > 0) {
+      await this.storageService.deleteImages(imageUrls);
     }
 
     return this.prisma.event.delete({ where: { id } });
