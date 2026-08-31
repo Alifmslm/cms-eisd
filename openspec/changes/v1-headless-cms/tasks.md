@@ -28,9 +28,9 @@
 
 ## 5. Backend - Medium Article Management
 
-- [ ] 5.1 Implement URL validation and Open Graph metadata fetching and verify metadata is extracted correctly
-- [ ] 5.2 Implement article CRUD endpoints and verify each operation works
-- [ ] 5.3 Implement Draft/Publish workflow for articles and verify status transitions
+- [x] 5.1 Implement URL validation and Open Graph metadata fetching and verify metadata is extracted correctly
+- [x] 5.2 Implement article CRUD endpoints and verify each operation works
+- [x] 5.3 Implement Draft/Publish workflow for articles and verify status transitions
 
 ## 6. Backend - Image Storage
 

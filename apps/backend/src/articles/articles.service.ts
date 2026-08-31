@@ -9,7 +9,19 @@ export class ArticlesService {
 
   private async fetchMetadata(url: string) {
     try {
-      const result = await ogs({ url });
+      const result = await ogs({
+        url,
+        fetchOptions: {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+        },
+      });
+
+      if (result.error) {
+        throw new Error(result.result.error || 'The URL is unreachable or returned no content');
+      }
+
       const ogImage = result.result.ogImage as any;
       let coverImage = '';
       if (ogImage) {
@@ -21,11 +33,22 @@ export class ArticlesService {
           coverImage = ogImage;
         }
       }
+
+      const title = result.result.ogTitle?.trim() || '';
+      const description = result.result.ogDescription?.trim() || '';
+
+      if (!title) {
+        throw new Error('Could not fetch Open Graph metadata from the provided URL');
+      }
+
+      const dateStr = result.result.ogDate || (result.result as any).articlePublishedTime || '';
+      const publishedDate = dateStr ? new Date(dateStr) : new Date();
+
       return {
-        title: result.result.ogTitle || '',
-        description: result.result.ogDescription || '',
+        title,
+        description,
         coverImage,
-        publishedDate: new Date(result.result.ogDate || Date.now()),
+        publishedDate,
       };
     } catch (error) {
       throw new BadRequestException(`Failed to fetch metadata from URL: ${error.message}`);

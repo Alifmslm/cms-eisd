@@ -1,4 +1,4 @@
-import { IsUrl, IsOptional, IsString } from 'class-validator';
+import { IsUrl, IsOptional } from 'class-validator';
 
 export class CreateArticleDto {
   @IsUrl()
