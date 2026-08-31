@@ -2,6 +2,9 @@ import { Injectable, BadRequestException, InternalServerErrorException } from '@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 @Injectable()
 export class StorageService {
   private s3Client: S3Client;
@@ -55,29 +58,31 @@ export class StorageService {
         }),
       );
     } catch (error) {
-      // Log but don't throw — deletion failure shouldn't block content operations
       console.error('Failed to delete image from R2:', error);
+    }
+  }
+
+  async deleteImages(urls: string[]): Promise<void> {
+    for (const url of urls) {
+      await this.deleteImage(url);
     }
   }
 
   private extractKeyFromUrl(url: string): string | null {
     if (!this.publicUrl || !url.startsWith(this.publicUrl)) return null;
-    return url.slice(this.publicUrl.length + 1); // +1 for the trailing slash
+    return url.slice(this.publicUrl.length + 1);
   }
 
   private validateFile(file: Express.Multer.File): void {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
-    if (file.size > maxSize) {
+    if (file.size > MAX_FILE_SIZE) {
       throw new BadRequestException('File size exceeds 10MB limit');
     }
 
-    if (!allowedTypes.includes(file.mimetype)) {
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG, WebP, GIF');
     }
   }
