@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import * as session from 'express-session';
-import * as csrf from 'csurf';
+import session from 'express-session';
+import csrf from 'csurf';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
