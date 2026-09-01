@@ -83,7 +83,12 @@ export class ArticlesService {
   }
 
   async findById(id: string) {
-    const article = await this.prisma.mediumArticle.findUnique({ where: { id } });
+    const article = await this.prisma.mediumArticle.findFirst({
+      where: {
+        id,
+        publishedAt: { not: null },
+      },
+    });
     if (!article) {
       throw new NotFoundException(`Article with id "${id}" not found`);
     }

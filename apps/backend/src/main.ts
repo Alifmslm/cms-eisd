@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import session from 'express-session';
 import csrf from 'csurf';
 import { AppModule } from './app.module';
@@ -45,6 +46,16 @@ async function bootstrap() {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
   });
+
+  const config = new DocumentBuilder()
+    .setTitle('CMS EISD API')
+    .setDescription('Headless CMS API for managing Events and Medium Articles')
+    .setVersion('1.0')
+    .addCookieAuth('connect.sid')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(process.env.PORT || 3000);
 }
