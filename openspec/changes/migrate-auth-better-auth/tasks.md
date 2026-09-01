@@ -25,8 +25,8 @@
 
 ## 5. Guards
 
-- [ ] 5.1 Rewrite `AuthenticatedGuard` to call `auth.api.getSession({ headers: request.headers })` and throw `UnauthorizedException` if session is null, then verify guard compiles and returns 401 for unauthenticated requests
-- [ ] 5.2 Rewrite `RolesGuard` to read `session.user.role` from the Better Auth session (instead of `session.role`) and throw `ForbiddenException` if role doesn't match, then verify guard compiles and returns 403 for non-admin users
+- [x] 5.1 Rewrite `AuthenticatedGuard` to call `auth.api.getSession({ headers: request.headers })` and throw `UnauthorizedException` if session is null, then verify guard compiles and returns 401 for unauthenticated requests
+- [x] 5.2 Rewrite `RolesGuard` to read `session.user.role` from the Better Auth session (instead of `session.role`) and throw `ForbiddenException` if role doesn't match, then verify guard compiles and returns 403 for non-admin users
 - [ ] 5.3 Verify `AuthenticatedGuard` + `RolesGuard` work together: `GET /api/dashboard` returns 201/200 with valid session cookie, returns 401 without session
 
 ## 6. Controllers & OpenAPI
