@@ -27,7 +27,7 @@
 
 - [x] 5.1 Rewrite `AuthenticatedGuard` to call `auth.api.getSession({ headers: request.headers })` and throw `UnauthorizedException` if session is null, then verify guard compiles and returns 401 for unauthenticated requests
 - [x] 5.2 Rewrite `RolesGuard` to read `session.user.role` from the Better Auth session (instead of `session.role`) and throw `ForbiddenException` if role doesn't match, then verify guard compiles and returns 403 for non-admin users
-- [ ] 5.3 Verify `AuthenticatedGuard` + `RolesGuard` work together: `GET /api/dashboard` returns 201/200 with valid session cookie, returns 401 without session
+- [x] 5.3 Verify `AuthenticatedGuard` + `RolesGuard` work together: `GET /api/dashboard` returns 201/200 with valid session cookie, returns 401 without session
 
 ## 6. Controllers & OpenAPI
 
@@ -38,9 +38,9 @@
 
 ## 7. Seed
 
-- [ ] 7.1 Rewrite `prisma/seed.ts` to create admin user via Better Auth's `auth.api.signUpEmail({ email, password, name })` which handles password hashing internally, and verify seed runs and admin can sign in via `POST /api/auth/sign-in/username`
-- [ ] 7.2 Verify `GET /api/auth/get-session` with valid session cookie returns `{ session: {...}, user: { id, username, role: "admin", ... } }`
-- [ ] 7.3 Verify role-based access: admin can POST/PUT/DELETE events and articles, and unauthenticated requests return 401
+- [x] 7.1 Rewrite `prisma/seed.ts` to create admin user via Better Auth's `auth.api.signUpEmail({ email, password, name })` which handles password hashing internally, and verify seed runs and admin can sign in via `POST /api/auth/sign-in/username`
+- [x] 7.2 Verify `GET /api/auth/get-session` with valid session cookie returns `{ session: {...}, user: { id, username, role: "admin", ... } }`
+- [x] 7.3 Verify role-based access: admin can POST/PUT/DELETE events and articles, and unauthenticated requests return 401
 
 ## 8. Production Hardening
 
