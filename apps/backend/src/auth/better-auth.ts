@@ -6,7 +6,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET || process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  secret: (() => {
+    const secret = process.env.BETTER_AUTH_SECRET || process.env.SESSION_SECRET;
+    if (!secret && process.env.NODE_ENV === 'production') {
+      throw new Error('BETTER_AUTH_SECRET or SESSION_SECRET env var is required in production');
+    }
+    return secret || 'dev-secret-change-in-production';
+  })(),
 
   database: prismaAdapter(prisma, {
     provider: 'postgresql',

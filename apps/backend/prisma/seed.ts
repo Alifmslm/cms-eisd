@@ -7,8 +7,13 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
-  const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!username || !password) {
+    throw new Error('ADMIN_USERNAME and ADMIN_PASSWORD env vars are required');
+  }
+
   const email = `${username}@cms.local`;
 
   const existing = await prisma.user.findUnique({ where: { username } });

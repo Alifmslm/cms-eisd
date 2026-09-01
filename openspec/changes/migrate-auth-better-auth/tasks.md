@@ -44,9 +44,9 @@
 
 ## 8. Production Hardening
 
-- [ ] 8.1 Verify `NODE_ENV=production` causes `useSecureCookies: true` in auth config, and that `POST /api/auth/sign-in/username` over HTTP (non-HTTPS) fails with cookie not set
-- [ ] 8.2 Verify no dev-only auth endpoints exist in production (swagger-login, swagger-logout should 404)
-- [ ] 8.3 Verify `trustedOrigins` blocks requests from untrusted origins in CORS
+- [x] 8.1 Verify `NODE_ENV=production` causes `useSecureCookies: true` in auth config, and that `POST /api/auth/sign-in/username` over HTTP (non-HTTPS) fails with cookie not set
+- [x] 8.2 Verify no dev-only auth endpoints exist in production (swagger-login, swagger-logout should 404)
+- [x] 8.3 Verify `trustedOrigins` blocks requests from untrusted origins in CORS
 
 ## 9. Cleanup
 
