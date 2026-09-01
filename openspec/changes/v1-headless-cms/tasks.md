@@ -96,3 +96,4 @@
 - [ ] 14.1 Create README with setup instructions and verify developer can follow steps
 - [x] 14.2 Document API endpoints with request/response examples
 - [ ] 14.3 Document deployment process and environment variables
+- [ ] 14.4 Harden API docs for production: disable Swagger UI in production, remove dev-only swagger-login/swagger-logout endpoints, restore CSRF enforcement on all POST routes

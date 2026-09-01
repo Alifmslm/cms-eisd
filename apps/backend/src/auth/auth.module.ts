@@ -1,11 +1,6 @@
+// Auth endpoints are handled by Better Auth mounted in main.ts.
+// This module is retained as a placeholder for the NestJS DI container.
 import { Module } from '@nestjs/common';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { RolesGuard } from './roles.guard';
 
-@Module({
-  controllers: [AuthController],
-  providers: [AuthService, RolesGuard],
-  exports: [AuthService, RolesGuard],
-})
+@Module({})
 export class AuthModule {}
