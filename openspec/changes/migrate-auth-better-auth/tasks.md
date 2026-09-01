@@ -31,10 +31,10 @@
 
 ## 6. Controllers & OpenAPI
 
-- [ ] 6.1 Remove `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/csrf-token`, `GET /api/auth/profile`, `POST /api/auth/swagger-login`, `POST /api/auth/swagger-logout` from `auth.controller.ts`, and verify the file compiles
-- [ ] 6.2 Remove `@ApiCookieAuth()` from all protected controller methods (events, articles, storage, dashboard) and add `@ApiBearerAuth()` instead, then verify Swagger JSON shows `security: [{ bearerAuth: [] }]` on protected endpoints
-- [ ] 6.3 Add `.addBearerAuth()` to `DocumentBuilder` in `main.ts` and remove the Swagger login panel HTML/JS, then verify `/api/docs` loads and the Authorize button accepts Bearer token input
-- [ ] 6.4 Verify public endpoints (`GET /api/events`, `GET /api/events/:slug`, `GET /api/articles`, `GET /api/articles/:id`) still work without authentication
+- [x] 6.1 Remove `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/csrf-token`, `GET /api/auth/profile`, `POST /api/auth/swagger-login`, `POST /api/auth/swagger-logout` from `auth.controller.ts`, and verify the file compiles
+- [x] 6.2 Remove `@ApiCookieAuth()` from all protected controller methods (events, articles, storage, dashboard) and add `@ApiBearerAuth()` instead, then verify Swagger JSON shows `security: [{ bearerAuth: [] }]` on protected endpoints
+- [x] 6.3 Add `.addBearerAuth()` to `DocumentBuilder` in `main.ts` and remove the Swagger login panel HTML/JS, then verify `/api/docs` loads and the Authorize button accepts Bearer token input
+- [x] 6.4 Verify public endpoints (`GET /api/events`, `GET /api/events/:slug`, `GET /api/articles`, `GET /api/articles/:id`) still work without authentication
 
 ## 7. Seed
 

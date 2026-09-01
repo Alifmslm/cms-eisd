@@ -9,7 +9,7 @@ import {
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto, UpdateArticleDto } from './dto';
 import { Roles } from '../auth/roles.decorator';
@@ -38,7 +38,7 @@ export class ArticlesController {
   }
 
   @Post()
-  @ApiCookieAuth()
+  @ApiBearerAuth()
   @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(201)
@@ -51,7 +51,7 @@ export class ArticlesController {
   }
 
   @Put(':id')
-  @ApiCookieAuth()
+  @ApiBearerAuth()
   @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'Update an article (admin only)' })
@@ -64,7 +64,7 @@ export class ArticlesController {
   }
 
   @Post(':id/publish')
-  @ApiCookieAuth()
+  @ApiBearerAuth()
   @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(200)
@@ -78,7 +78,7 @@ export class ArticlesController {
   }
 
   @Post(':id/unpublish')
-  @ApiCookieAuth()
+  @ApiBearerAuth()
   @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(200)
@@ -92,7 +92,7 @@ export class ArticlesController {
   }
 
   @Delete(':id')
-  @ApiCookieAuth()
+  @ApiBearerAuth()
   @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(204)
