@@ -42,8 +42,8 @@
 
 - [x] 7.1 Implement GET /api/events endpoint returning only published events and verify response format
 - [x] 7.2 Implement GET /api/events/:slug endpoint and verify single event retrieval
-- [ ] 7.3 Implement GET /api/articles endpoint returning only published articles and verify response format
-- [ ] 7.4 Implement GET /api/articles/:id endpoint and verify single article retrieval
+- [x] 7.3 Implement GET /api/articles endpoint returning only published articles and verify response format
+- [x] 7.4 Implement GET /api/articles/:id endpoint and verify single article retrieval
 - [ ] 7.5 Implement proper error handling with 404 responses for not found items
 
 ## 8. Frontend - Setup

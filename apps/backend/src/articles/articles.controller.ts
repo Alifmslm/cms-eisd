@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  Query,
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
@@ -17,23 +16,12 @@ import { RolesGuard } from '../auth/roles.guard';
 import { AuthenticatedGuard } from '../auth/authenticated.guard';
 
 @Controller('api/articles')
-@UseGuards(AuthenticatedGuard, RolesGuard)
 export class ArticlesController {
   constructor(private articlesService: ArticlesService) {}
 
-  @Post()
-  @Roles('admin')
-  @HttpCode(201)
-  async create(@Body() createArticleDto: CreateArticleDto) {
-    return this.articlesService.create(createArticleDto);
-  }
-
   @Get()
-  async findAll(@Query('published') published?: string) {
-    if (published === 'true') {
-      return this.articlesService.findPublished();
-    }
-    return this.articlesService.findAll();
+  async findPublished() {
+    return this.articlesService.findPublished();
   }
 
   @Get(':id')
@@ -41,13 +29,23 @@ export class ArticlesController {
     return this.articlesService.findById(id);
   }
 
+  @Post()
+  @UseGuards(AuthenticatedGuard, RolesGuard)
+  @Roles('admin')
+  @HttpCode(201)
+  async create(@Body() createArticleDto: CreateArticleDto) {
+    return this.articlesService.create(createArticleDto);
+  }
+
   @Put(':id')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   async update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articlesService.update(id, updateArticleDto);
   }
 
   @Post(':id/publish')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(200)
   async publish(@Param('id') id: string) {
@@ -55,6 +53,7 @@ export class ArticlesController {
   }
 
   @Post(':id/unpublish')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(200)
   async unpublish(@Param('id') id: string) {
@@ -62,6 +61,7 @@ export class ArticlesController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthenticatedGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(204)
   async remove(@Param('id') id: string) {
