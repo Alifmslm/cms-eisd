@@ -50,6 +50,6 @@
 
 ## 9. Cleanup
 
-- [ ] 9.1 Remove old auth files that are no longer needed: verify `src/auth/auth.service.ts` is removed or repurposed, `src/auth/auth.controller.ts` is minimal or removed
-- [ ] 9.2 Remove `bcrypt` dependency from `package.json` if no longer used elsewhere (Better Auth uses its own hashing)
-- [ ] 9.3 Verify `pnpm build` succeeds with zero errors
+- [x] 9.1 Remove old auth files that are no longer needed: verify `src/auth/auth.service.ts` is removed or repurposed, `src/auth/auth.controller.ts` is minimal or removed
+- [x] 9.2 Remove `bcrypt` dependency from `package.json` if no longer used elsewhere (Better Auth uses its own hashing)
+- [x] 9.3 Verify `pnpm build` succeeds with zero errors
