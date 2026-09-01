@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,15 +7,15 @@ const prisma = new PrismaClient();
 
 async function main() {
   const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
-  const passwordHash = await bcrypt.hash(password, 10);
 
   const admin = await prisma.user.upsert({
     where: { username },
     update: { role: 'admin' },
     create: {
       username,
-      passwordHash,
+      email: `${username}@cms.local`,
+      name: 'Admin',
+      emailVerified: true,
       role: 'admin',
     },
   });
