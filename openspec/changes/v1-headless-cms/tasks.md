@@ -44,7 +44,7 @@
 - [x] 7.2 Implement GET /api/events/:slug endpoint and verify single event retrieval
 - [x] 7.3 Implement GET /api/articles endpoint returning only published articles and verify response format
 - [x] 7.4 Implement GET /api/articles/:id endpoint and verify single article retrieval
-- [ ] 7.5 Implement proper error handling with 404 responses for not found items
+- [x] 7.5 Implement proper error handling with 404 responses for not found items
 
 ## 8. Frontend - Setup
 
@@ -94,5 +94,5 @@
 ## 14. Documentation
 
 - [ ] 14.1 Create README with setup instructions and verify developer can follow steps
-- [ ] 14.2 Document API endpoints with request/response examples
+- [x] 14.2 Document API endpoints with request/response examples
 - [ ] 14.3 Document deployment process and environment variables
