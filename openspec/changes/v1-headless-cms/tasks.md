@@ -48,8 +48,8 @@
 
 ## 8. Frontend - Setup
 
-- [ ] 8.1 Set up React project with Vite, React Router, and necessary dependencies and verify dev server starts
-- [ ] 8.2 Set up API client with axios/fetch and verify backend communication works
+- [x] 8.1 Set up React project with Vite, React Router, and necessary dependencies and verify dev server starts
+- [x] 8.2 Set up API client with axios/fetch and verify backend communication works
 
 ## 9. Frontend - Authentication
 
