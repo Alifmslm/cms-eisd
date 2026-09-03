@@ -53,9 +53,9 @@
 
 ## 9. Frontend - Authentication
 
-- [ ] 9.1 Create login page with username/password form and verify form submission works
-- [ ] 9.2 Implement authentication context/state management and verify login state persists
-- [ ] 9.3 Create protected route wrapper and verify unauthenticated users are redirected to login
+- [x] 9.1 Create login page with username/password form and verify form submission works
+- [x] 9.2 Implement authentication context/state management and verify login state persists
+- [x] 9.3 Create protected route wrapper and verify unauthenticated users are redirected to login
 
 ## 10. Frontend - Dashboard
 

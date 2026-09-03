@@ -21,7 +21,7 @@
 | `--color-card` | `#FFFFFF` | Card / panel surface |
 | `--color-border` | `#E5E5E5` | Card border, dividers, input border *(you wrote `#e5e5e` — assumed a typo for `#E5E5E5`; flag if a different shade was meant)* |
 | `--color-text-primary` | `#1A1A1A` | Primary text *(not specified — proposed for AA contrast; confirm)* |
-| `--color-text-secondary` | `#6B7280` | Muted/secondary text *(not specified — proposed; confirm)* |
+| `--color-text-secondary` | `#6B7280` | Muted/secondary text *(not specified — proposed for AA contrast (~4.8:1 on white); confirm)* |
 
 ### Suggested proportion (70 / 20 / 10)
 - **70% neutral** — background, cards, sidebar, borders, body text. Keeps the dashboard calm and readable.
