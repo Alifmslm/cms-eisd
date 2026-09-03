@@ -1,0 +1,9 @@
+{
+  // Points at the REAL pnpm store path, not the node_modules symlink:
+  // VS Code over a \\wsl.localhost UNC share cannot follow symlinks, so the
+  // symlinked path falls back to the bundled TS (which can't parse this
+  // repo's TS 6 tsconfig). NOTE: the version segment (typescript@6.0.3) must
+  // be updated if TypeScript is upgraded. Long-term, prefer opening this
+  // repo with the VS Code Remote–WSL extension instead of a UNC share.
+  "typescript.tsdk": "node_modules/.pnpm/typescript@6.0.3/node_modules/typescript/lib"
+}
