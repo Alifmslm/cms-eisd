@@ -8,6 +8,11 @@ export function ProtectedRoute({ children }: { children: React.JSX.Element }) {
   const { isAuthenticated, loading } = useAuth()
   const location = useLocation()
 
+  // TEMP (disable-auth-for-fe-testing) — REVERT ME: bypass auth for UI testing.
+  // Returns children unconditionally so every guarded route renders without
+  // a session. Delete this block to re-enable route protection.
+  return children
+
   if (loading) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
