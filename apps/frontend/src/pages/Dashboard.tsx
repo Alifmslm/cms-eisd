@@ -1,5 +1,5 @@
 // Latest updates as a column table with zebra striping in the wrapper tint.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Calendar,
   ChevronRight,
@@ -24,7 +24,13 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import { useAuth } from '@/context/useAuth'
-import { eventStatus, getDashboardData, type MockEvent } from './dashboard.mock'
+import {
+  eventStatus,
+  fetchDashboard,
+  type DashboardArticle,
+  type DashboardEvent,
+  type DashboardResponse,
+} from '@/lib/dashboard'
 
 const NAV = [
   { label: 'Dashboard', icon: LayoutDashboard, active: true },
@@ -138,7 +144,7 @@ function EmptyLatest() {
   )
 }
 
-function UpcomingCard({ upcoming, className = '' }: { upcoming: MockEvent[]; className?: string }) {
+function UpcomingCard({ upcoming, className = '' }: { upcoming: DashboardEvent[]; className?: string }) {
   return (
     <div className={`flex flex-col overflow-hidden rounded-lg border border-[#EBEBEB] bg-white ${className}`}>
       <div className="flex flex-col gap-0.5 px-5 pt-5">
@@ -213,20 +219,65 @@ function LatestTable({ items }: { items: FeedItem[] }) {
 }
 
 export function Dashboard() {
-  const data = useMemo(() => getDashboardData(), [])
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [page, setPage] = useState(0)
+
+  const load = async () => {
+    setLoading(true)
+    setError(false)
+    try {
+      setDashboard(await fetchDashboard())
+      setPage(0)
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let live = true
+    ;(async () => {
+      try {
+        const data = await fetchDashboard()
+        if (live) {
+          setDashboard(data)
+          setLoading(false)
+        }
+      } catch {
+        if (live) {
+          setError(true)
+          setLoading(false)
+        }
+      }
+    })()
+    return () => {
+      live = false
+    }
+  }, [])
+
+  // Defensive client-side ordering: soonest start first, most recently updated first.
+  const upcoming = useMemo(
+    () =>
+      [...(dashboard?.upcomingEventsList ?? [])].sort(
+        (a, b) => +new Date(a.startDate) - +new Date(b.startDate),
+      ),
+    [dashboard],
+  )
 
   const feed: FeedItem[] = useMemo(
     () =>
       [
-        ...data.latest.map((e) => ({
+        ...(dashboard?.latestEvents ?? []).map((e) => ({
           id: e.id,
           title: e.title,
           updatedAt: e.updatedAt,
           kind: 'event' as const,
           published: e.publishedAt !== null,
         })),
-        ...data.articles.map((a) => ({
+        ...(dashboard?.latestArticles ?? []).map((a: DashboardArticle) => ({
           id: a.id,
           title: a.title,
           updatedAt: a.updatedAt,
@@ -234,7 +285,7 @@ export function Dashboard() {
           published: a.publishedAt !== null,
         })),
       ].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)),
-    [data],
+    [dashboard],
   )
 
   const pages = Math.max(1, Math.ceil(feed.length / PAGE_SIZE))
@@ -258,32 +309,32 @@ export function Dashboard() {
   const stats = [
     {
       label: 'Total events',
-      value: data.totalEvents,
+      value: dashboard?.totalEvents ?? 0,
       icon: Calendar,
       tileClassName: 'bg-amber-500 text-white',
       breakdown: [
-        { dot: 'bg-[#00D97A]', label: 'Published', value: data.publishedEvents },
-        { dot: 'bg-[#F59E0B]', label: 'Draft', value: data.draftEvents },
+        { dot: 'bg-[#00D97A]', label: 'Published', value: dashboard?.publishedEvents ?? 0 },
+        { dot: 'bg-[#F59E0B]', label: 'Draft', value: dashboard?.draftEvents ?? 0 },
       ],
     },
     {
       label: 'Total articles',
-      value: data.totalArticles,
+      value: dashboard?.totalArticles ?? 0,
       icon: Newspaper,
       tileClassName: 'bg-rose-500 text-white',
       breakdown: [
-        { dot: 'bg-[#494CA0]', label: 'Live', value: 1 },
-        { dot: 'bg-[#F59E0B]', label: 'Draft', value: 1 },
+        { dot: 'bg-[#494CA0]', label: 'Live', value: dashboard?.publishedArticles ?? 0 },
+        { dot: 'bg-[#F59E0B]', label: 'Draft', value: dashboard?.draftArticles ?? 0 },
       ],
     },
     {
       label: 'Drafts',
-      value: data.draftEvents,
+      value: (dashboard?.draftEvents ?? 0) + (dashboard?.draftArticles ?? 0),
       icon: FileText,
       tileClassName: 'bg-cyan-600 text-white',
       breakdown: [
-        { dot: 'bg-[#F59E0B]', label: 'Events', value: data.draftEvents },
-        { dot: 'bg-[#494CA0]', label: 'Articles', value: 1 },
+        { dot: 'bg-[#F59E0B]', label: 'Events', value: dashboard?.draftEvents ?? 0 },
+        { dot: 'bg-[#494CA0]', label: 'Articles', value: dashboard?.draftArticles ?? 0 },
       ],
     },
   ]
@@ -309,6 +360,20 @@ export function Dashboard() {
           </div>
         </div>
 
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading dashboard…</p>
+        ) : error || !dashboard ? (
+          <Alert>
+            <AlertTitle>Could not load dashboard data</AlertTitle>
+            <AlertDescription>
+              <span className="mb-3 block">Check your connection and try again.</span>
+              <Button variant="outline" size="sm" onClick={load}>
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
         {/* Stat cards in #F7F9FF wrapper — 12px radius / 4px padding+gap */}
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="grid grid-cols-3 gap-1">
@@ -392,9 +457,11 @@ export function Dashboard() {
                 </div>
               </div>
             </div>
-            <UpcomingCard upcoming={data.upcoming} className="col-span-2" />
+            <UpcomingCard upcoming={upcoming} className="col-span-2" />
           </div>
         </section>
+          </>
+        )}
       </main>
     </div>
   )

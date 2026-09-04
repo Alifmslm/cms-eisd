@@ -59,11 +59,11 @@
 
 ## 10. Frontend - Dashboard
 
-- [ ] 10.1 Create dashboard layout with navigation sidebar and verify layout renders correctly
-- [ ] 10.2 Implement statistics cards (total events, total articles) and verify data displays
-- [ ] 10.3 Implement upcoming events list widget and verify events are sorted by start date
-- [ ] 10.4 Implement latest events list widget and verify events are sorted by update date
-- [ ] 10.5 Implement empty state messages for no content scenarios
+- [X] 10.1 Create dashboard layout with navigation sidebar and verify layout renders correctly
+- [X] 10.2 Implement statistics cards (total events, total articles) and verify data displays
+- [X] 10.3 Implement upcoming events list widget and verify events are sorted by start date
+- [X] 10.4 Implement latest events list widget and verify events are sorted by update date
+- [X] 10.5 Implement empty state messages for no content scenarios
 
 ## 11. Frontend - Event Management
 
