@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, FlaskConical, TriangleAlert } from 'lucide-react'
+import { Eye, EyeOff, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
-import { Frame, FrameDescription, FrameHeader, FramePanel, FrameTitle } from '@/components/reui/frame'
-import { IconTile } from '@/components/reui/icon-tile'
+import { Frame, FrameHeader, FramePanel } from '@/components/reui/frame'
 import { authClient } from '@/lib/auth-client'
 
 // Username/password login. Submits to Better Auth
@@ -46,15 +45,6 @@ export function Login() {
         <Frame>
           <FramePanel>
             <FrameHeader>
-              <div className="flex items-center gap-2.5">
-                <IconTile variant="solid">
-                  <FlaskConical />
-                </IconTile>
-                <div>
-                  <FrameTitle>EISD Laboratory</FrameTitle>
-                  <FrameDescription>Content management</FrameDescription>
-                </div>
-              </div>
               <h1 className="mt-4 text-[32px] leading-10 font-semibold text-foreground">Sign in</h1>
               <p className="text-sm text-muted-foreground">Use your admin username and password.</p>
             </FrameHeader>

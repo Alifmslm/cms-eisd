@@ -53,10 +53,10 @@ This keeps both brand colors visible without either competing for attention agai
 | Small / Caption | 12px | 16px | 400 |
 
 ## 4. Spacing
-- **Base unit:** 8px
-- **Scale:** 4\* · 8 · 16 · 24 · 32 · 40 · 48 · 64 · 96
-
-\*4px kept only as a half-step for tight inline gaps (icon-to-label); everything else is a multiple of 8.
+- **Base unit:** 4px — every gap, padding, and margin is a multiple of 4.
+- **Scale:** 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64 · 96
+- **Tailwind mapping:** `gap-1` (4px) · `gap-2` (8px) · `gap-3` (12px) · `gap-4` (16px) · `gap-5` (20px) · `gap-6` (24px) · `gap-8` (32px) · `gap-10` (40px) · `gap-12` (48px) · `gap-16` (64px) · `gap-24` (96px). Same steps for `p-*` / `m-*` / `space-*`.
+- **Rule:** never use odd / non-4px values (e.g. no 6px, 10px, 14px gaps). Round to the nearest 4px step. All prototype and production UI follows this.
 
 ## 5. Radius & Elevation
 *Not specified — following ReUI/shadcn defaults:*
