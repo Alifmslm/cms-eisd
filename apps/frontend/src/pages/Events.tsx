@@ -121,9 +121,11 @@ export function Events() {
     const q = query.trim().toLowerCase()
     return events
       .filter((e) => (statusFilter === 'All' ? true : getEventStatus(e) === statusFilter))
-      .filter((e) =>
-        publishFilter === 'All' ? true : e.publishedAt !== null === (publishFilter === 'Published'),
-      )
+      .filter((e) => {
+        if (publishFilter === 'Published') return e.publishedAt !== null
+        if (publishFilter === 'Draft') return e.publishedAt === null
+        return true
+      })
       .filter((e) =>
         q ? `${e.title} ${e.slug} ${e.location}`.toLowerCase().includes(q) : true,
       )
@@ -142,10 +144,11 @@ export function Events() {
               {counts['Finished']} finished
             </p>
           </div>
-          {/* TODO(11.2): wire to the create form when it exists. */}
-          <Button className="text-white" title="Create form lands in task 11.2">
-            <Plus className="size-4" /> New event
-          </Button>
+          <Link to="/events/new">
+            <Button className="text-white">
+              <Plus className="size-4" /> New event
+            </Button>
+          </Link>
         </div>
 
         {USE_MOCKS && (
@@ -230,6 +233,7 @@ export function Events() {
                       <th className="pb-2 font-medium">Schedule</th>
                       <th className="pb-2 font-medium">Status</th>
                       <th className="pb-2 text-right font-medium">Publish</th>
+                      <th className="w-16 pb-2" />
                     </tr>
                   </thead>
                   <tbody>
@@ -266,6 +270,14 @@ export function Events() {
                           </td>
                           <td className="py-3 pr-2 text-right">
                             <PublishBadge published={e.publishedAt !== null} />
+                          </td>
+                          <td className="py-3 pr-2 text-right">
+                            <Link
+                              to={`/events/${e.id}/edit`}
+                              className="text-xs font-medium text-secondary underline-offset-4 hover:underline"
+                            >
+                              Edit
+                            </Link>
                           </td>
                         </tr>
                       )
