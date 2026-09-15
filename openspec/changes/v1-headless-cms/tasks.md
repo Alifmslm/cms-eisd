@@ -67,7 +67,7 @@
 
 ## 11. Frontend - Event Management
 
-- [ ] 11.1 Create event list page with status indicators and verify events display correctly
+- [x] 11.1 Create event list page with status indicators and verify events display correctly
 - [ ] 11.2 Create event create/edit form with all required fields and verify form validation works
 - [ ] 11.3 Implement image upload component with preview and progress indicator and verify upload works
 - [ ] 11.4 Implement cover image aspect ratio validation (16:9) and verify invalid ratios are rejected
