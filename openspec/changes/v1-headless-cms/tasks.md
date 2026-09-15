@@ -68,12 +68,14 @@
 ## 11. Frontend - Event Management
 
 - [x] 11.1 Create event list page with status indicators and verify events display correctly
+- [ ] 11.1-review Review event list prototype UI fit with mock data (no backend) and collect feedback before 11.2
 - [ ] 11.2 Create event create/edit form with all required fields and verify form validation works
 - [ ] 11.3 Implement image upload component with preview and progress indicator and verify upload works
 - [ ] 11.4 Implement cover image aspect ratio validation (16:9) and verify invalid ratios are rejected
 - [ ] 11.5 Implement gallery image upload (max 4) and verify limit is enforced
 - [ ] 11.6 Implement publish/unpublish toggle and verify status changes
 - [ ] 11.7 Implement delete confirmation dialog and verify deletion works
+- [ ] 11.8 Review full Event Management prototype end-to-end (list → form → upload → publish → delete) with mock data and sign off UI fit
 
 ## 12. Frontend - Medium Article Management
 
