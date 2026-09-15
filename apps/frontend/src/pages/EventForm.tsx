@@ -9,6 +9,7 @@ import {
   Newspaper,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
+import { ImageUpload, type UploadedImage } from '@/components/ImageUpload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -65,8 +66,8 @@ function validate(f: FormState, selfId: string | null): Errors {
   if (!f.endDate) e.endDate = 'End date is required.'
   if (f.startDate && f.endDate && new Date(f.endDate) < new Date(f.startDate))
     e.endDate = 'End date must be the same as or after the start date.'
-  if (!f.coverImage.trim()) e.coverImage = 'Cover image is required (paste a URL for now — upload lands in 11.3).'
-  if (!f.headerImage.trim()) e.headerImage = 'Header image is required (paste a URL for now — upload lands in 11.3).'
+  if (!f.coverImage.trim()) e.coverImage = 'Cover image is required — pick a file or paste a URL.'
+  if (!f.headerImage.trim()) e.headerImage = 'Header image is required — pick a file or paste a URL.'
   return e
 }
 
@@ -158,6 +159,22 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
   )
   const [errors, setErrors] = useState<Errors>({})
   const [submitted, setSubmitted] = useState<null | { slug: string; title: string }>(null)
+  // 11.3: image pickers mirror their preview URL into form.coverImage/headerImage.
+  const [cover, setCover] = useState<UploadedImage | null>(() =>
+    mode === 'edit' && existing?.coverImage
+      ? { previewUrl: existing.coverImage, fileName: existing.coverImage, uploaded: true }
+      : null,
+  )
+  const [header, setHeader] = useState<UploadedImage | null>(null)
+
+  const syncCover = (img: UploadedImage | null) => {
+    setCover(img)
+    setForm((f) => ({ ...f, coverImage: img?.previewUrl ?? '' }))
+  }
+  const syncHeader = (img: UploadedImage | null) => {
+    setHeader(img)
+    setForm((f) => ({ ...f, headerImage: img?.previewUrl ?? '' }))
+  }
 
   if (mode === 'edit' && !existing) {
     return (
@@ -334,28 +351,26 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
             )}
             {field(
               'coverImage',
-              'Cover image URL',
-              <Input
+              'Cover image',
+              <ImageUpload
                 id="evt-coverImage"
-                className={inputCls}
-                value={form.coverImage}
-                onChange={(e) => set('coverImage', e.target.value)}
-                placeholder="https://… (16:9 enforced in 11.4)"
-                aria-invalid={!!errors.coverImage}
+                value={cover}
+                onChange={syncCover}
+                hint="16:9 enforced in 11.4"
+                invalid={!!errors.coverImage}
               />,
-              'File upload with progress lands in 11.3; ratio check in 11.4.',
+              'Listing/card image. Progress is mocked in this prototype — real R2 upload lands with the backend.',
             )}
             {field(
               'headerImage',
-              'Header image URL',
-              <Input
+              'Header image',
+              <ImageUpload
                 id="evt-headerImage"
-                className={inputCls}
-                value={form.headerImage}
-                onChange={(e) => set('headerImage', e.target.value)}
-                placeholder="https://… (detail page banner)"
-                aria-invalid={!!errors.headerImage}
+                value={header}
+                onChange={syncHeader}
+                invalid={!!errors.headerImage}
               />,
+              'Detail page banner.',
             )}
 
             {submitted && (
@@ -363,7 +378,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                 <AlertTitle>{mode === 'create' ? 'Looks good — would save as Draft' : 'Looks good — would save edits'}</AlertTitle>
                 <AlertDescription>
                   “{submitted.title}” (/{submitted.slug}) passed validation against {fromDatetimeLocal(form.startDate)} →{' '}
-                  {fromDatetimeLocal(form.endDate)}. Connect the backend to persist (tasks 11.3+).
+                  {fromDatetimeLocal(form.endDate)}. Connect the backend to persist (tasks 11.6+).
                 </AlertDescription>
               </Alert>
             )}
