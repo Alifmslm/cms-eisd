@@ -356,10 +356,11 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                 id="evt-coverImage"
                 value={cover}
                 onChange={syncCover}
-                hint="16:9 enforced in 11.4"
+                aspectRatio={{ w: 16, h: 9 }}
+                hint="listing/card image"
                 invalid={!!errors.coverImage}
               />,
-              'Listing/card image. Progress is mocked in this prototype — real R2 upload lands with the backend.',
+              'Must be 16:9 — other shapes are rejected before upload. Progress is mocked in this prototype; real R2 upload lands with the backend.',
             )}
             {field(
               'headerImage',
