@@ -9,6 +9,7 @@ import {
   Newspaper,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
+import { GalleryUpload, type GalleryImage } from '@/components/GalleryUpload'
 import { ImageUpload, type UploadedImage } from '@/components/ImageUpload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -158,7 +159,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
         },
   )
   const [errors, setErrors] = useState<Errors>({})
-  const [submitted, setSubmitted] = useState<null | { slug: string; title: string }>(null)
+  const [submitted, setSubmitted] = useState<null | { slug: string; title: string; galleryCount: number }>(null)
   // 11.3: image pickers mirror their preview URL into form.coverImage/headerImage.
   const [cover, setCover] = useState<UploadedImage | null>(() =>
     mode === 'edit' && existing?.coverImage
@@ -166,6 +167,8 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
       : null,
   )
   const [header, setHeader] = useState<UploadedImage | null>(null)
+  // 11.5: optional gallery, max 4. Stored as preview URLs for the submit preview.
+  const [gallery, setGallery] = useState<GalleryImage[]>([])
 
   const syncCover = (img: UploadedImage | null) => {
     setCover(img)
@@ -208,7 +211,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
     // Prototype: no backend — show what WOULD be saved.
-    setSubmitted({ slug: form.slug.trim(), title: form.title.trim() })
+    setSubmitted({ slug: form.slug.trim(), title: form.title.trim(), galleryCount: gallery.length })
   }
 
   const field = (
@@ -374,12 +377,26 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
               'Detail page banner.',
             )}
 
+            <div className="flex flex-col gap-1.5">
+              <Label>
+                Gallery images <span className="font-normal text-muted-foreground">(optional, max 4)</span>
+              </Label>
+              <GalleryUpload value={gallery} onChange={setGallery} />
+              <p className="text-xs text-muted-foreground">
+                V1 caps the gallery at 4 — the list is array-shaped so V2 can raise the limit without a schema change.
+              </p>
+            </div>
+
             {submitted && (
               <Alert>
                 <AlertTitle>{mode === 'create' ? 'Looks good — would save as Draft' : 'Looks good — would save edits'}</AlertTitle>
                 <AlertDescription>
                   “{submitted.title}” (/{submitted.slug}) passed validation against {fromDatetimeLocal(form.startDate)} →{' '}
-                  {fromDatetimeLocal(form.endDate)}. Connect the backend to persist (tasks 11.6+).
+                  {fromDatetimeLocal(form.endDate)}
+                  {submitted.galleryCount > 0
+                    ? ` with ${submitted.galleryCount} galler${submitted.galleryCount === 1 ? 'y image' : 'y images'}.`
+                    : ' with no gallery images.'}{' '}
+                  Connect the backend to persist (tasks 11.6+).
                 </AlertDescription>
               </Alert>
             )}

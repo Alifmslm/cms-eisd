@@ -75,20 +75,25 @@
 - [ ] 11.3-review Review image upload prototype UI fit with local previews and mocked progress (no backend) and collect feedback
 - [x] 11.4 Implement cover image aspect ratio validation (16:9) and verify invalid ratios are rejected
 - [ ] 11.4-review Review cover 16:9 validation prototype UX (accept/reject messaging) with local files (no backend) and collect feedback
-- [ ] 11.5 Implement gallery image upload (max 4) and verify limit is enforced
+- [x] 11.5 Implement gallery image upload (max 4) and verify limit is enforced
 - [ ] 11.5-review Review gallery upload prototype UI fit (max 4 counter, ordering, removal) with local previews (no backend) and collect feedback
-- [ ] 11.6 Implement publish/unpublish toggle and verify status changes
+- [x] 11.6 Implement publish/unpublish toggle and verify status changes
 - [ ] 11.6-review Review publish/unpublish toggle prototype UX (optimistic state, badge flip) with mock data (no backend) and collect feedback
-- [ ] 11.7 Implement delete confirmation dialog and verify deletion works
+- [x] 11.7 Implement delete confirmation dialog and verify deletion works
 - [ ] 11.8 Review full Event Management prototype end-to-end (list → form → upload → publish → delete) with mock data and sign off UI fit
 
 ## 12. Frontend - Medium Article Management
 
 - [ ] 12.1 Create article list page and verify articles display correctly
+- [ ] 12.1-review Review article list prototype UI fit with mock data (no backend) and collect feedback before 12.2
 - [ ] 12.2 Create add article form with URL input only and verify form works
+- [ ] 12.2-review Review add-article form prototype UI fit with mock data (no backend) and collect feedback
 - [ ] 12.3 Implement URL validation and error handling for invalid/unreachable URLs
+- [ ] 12.3-review Review URL validation prototype UX (invalid/unreachable/missing-metadata messaging) with mock data (no backend) and collect feedback
 - [ ] 12.4 Implement publish/unpublish toggle for articles and verify status changes
+- [ ] 12.4-review Review article publish/unpublish toggle prototype UX (optimistic state, badge flip) with mock data (no backend) and collect feedback
 - [ ] 12.5 Implement delete confirmation dialog for articles
+- [ ] 12.6 Review full Article Management prototype end-to-end (list → add URL → publish → delete) with mock data and sign off UI fit
 
 ## 13. Integration & Testing
 
