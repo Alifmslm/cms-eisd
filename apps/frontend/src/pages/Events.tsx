@@ -97,6 +97,9 @@ export function Events() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
   const [publishFilter, setPublishFilter] = useState<PublishFilter>('All')
   const [query, setQuery] = useState('')
+  // 11.7 prototype: deletion is confirmed then applied in memory only.
+  const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null)
+  const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -122,6 +125,25 @@ export function Events() {
   // POST `:id/publish` / `:id/unpublish` lands with the real API.
   const togglePublish = (id: string) =>
     setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
+
+  // 11.7 prototype: confirmed deletion, in memory only (DELETE /api/events/:id
+  // lands with the real API, including R2 image cleanup per task 6.3).
+  const confirmDelete = () => {
+    if (!pendingDelete) return
+    const title = pendingDelete.title
+    setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id))
+    setPendingDelete(null)
+    setDeletedNotice(`“${title}” was deleted (mock — resets on reload).`)
+  }
+
+  useEffect(() => {
+    if (!pendingDelete) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPendingDelete(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pendingDelete])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -162,7 +184,20 @@ export function Events() {
             <AlertTitle>Prototype data — no backend needed</AlertTitle>
             <AlertDescription>
               Showing 6 fixtures covering Incoming / On Going / Finished + Draft / Published. Publish
-              toggles flip in memory only (reset on reload). Set VITE_USE_MOCKS=false to hit the real API.
+              toggles and deletions apply in memory only (reset on reload). Set VITE_USE_MOCKS=false to
+              hit the real API.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {deletedNotice && (
+          <Alert>
+            <AlertTitle>Deleted</AlertTitle>
+            <AlertDescription>
+              <span className="mb-3 block">{deletedNotice}</span>
+              <Button variant="outline" size="sm" onClick={() => setDeletedNotice(null)}>
+                Dismiss
+              </Button>
             </AlertDescription>
           </Alert>
         )}
@@ -239,7 +274,7 @@ export function Events() {
                       <th className="pb-2 font-medium">Schedule</th>
                       <th className="pb-2 font-medium">Status</th>
                       <th className="pb-2 text-right font-medium">Publish</th>
-                      <th className="w-36 pb-2" />
+                      <th className="w-44 pb-2" />
                     </tr>
                   </thead>
                   <tbody>
@@ -306,6 +341,18 @@ export function Events() {
                               >
                                 Edit
                               </Link>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeletedNotice(null)
+                                  setPendingDelete(e)
+                                }}
+                                title={`Delete “${e.title}” permanently`}
+                                aria-label={`Delete ${e.title}`}
+                                className="text-xs font-medium text-destructive underline-offset-4 hover:underline"
+                              >
+                                Delete
+                              </button>
                             </span>
                           </td>
                         </tr>
@@ -318,6 +365,38 @@ export function Events() {
           </div>
         </section>
       </main>
+
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4"
+          onClick={() => setPendingDelete(null)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-event-title"
+            aria-describedby="delete-event-desc"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-lg"
+          >
+            <h2 id="delete-event-title" className="text-base font-semibold">
+              Delete “{pendingDelete.title}”?
+            </h2>
+            <p id="delete-event-desc" className="mt-1.5 text-sm text-muted-foreground">
+              This permanently removes the event{pendingDelete.publishedAt !== null ? ', including its public page,' : ''} and
+              its images. There is no revision history in V1, so this can’t be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="outline" autoFocus onClick={() => setPendingDelete(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete event
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
