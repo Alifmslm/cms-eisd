@@ -19,6 +19,7 @@ import {
   fetchAdminEvents,
   formatShort,
   getEventStatus,
+  togglePublishState,
   USE_MOCKS,
   type AdminEvent,
   type EventStatus,
@@ -117,6 +118,11 @@ export function Events() {
     return c
   }, [events])
 
+  // 11.6 prototype: optimistic in-memory flip. No backend call yet —
+  // POST `:id/publish` / `:id/unpublish` lands with the real API.
+  const togglePublish = (id: string) =>
+    setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return events
@@ -155,8 +161,8 @@ export function Events() {
           <Alert>
             <AlertTitle>Prototype data — no backend needed</AlertTitle>
             <AlertDescription>
-              Showing 6 fixtures covering Incoming / On Going / Finished + Draft / Published. Set
-              VITE_USE_MOCKS=false to hit the real API.
+              Showing 6 fixtures covering Incoming / On Going / Finished + Draft / Published. Publish
+              toggles flip in memory only (reset on reload). Set VITE_USE_MOCKS=false to hit the real API.
             </AlertDescription>
           </Alert>
         )}
@@ -233,7 +239,7 @@ export function Events() {
                       <th className="pb-2 font-medium">Schedule</th>
                       <th className="pb-2 font-medium">Status</th>
                       <th className="pb-2 text-right font-medium">Publish</th>
-                      <th className="w-16 pb-2" />
+                      <th className="w-36 pb-2" />
                     </tr>
                   </thead>
                   <tbody>
@@ -272,12 +278,35 @@ export function Events() {
                             <PublishBadge published={e.publishedAt !== null} />
                           </td>
                           <td className="py-3 pr-2 text-right">
-                            <Link
-                              to={`/events/${e.id}/edit`}
-                              className="text-xs font-medium text-secondary underline-offset-4 hover:underline"
-                            >
-                              Edit
-                            </Link>
+                            <span className="inline-flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => togglePublish(e.id)}
+                                title={
+                                  e.publishedAt !== null
+                                    ? `Unpublish “${e.title}” (back to Draft)`
+                                    : `Publish “${e.title}” (goes live)`
+                                }
+                                aria-label={
+                                  e.publishedAt !== null
+                                    ? `Unpublish ${e.title}`
+                                    : `Publish ${e.title}`
+                                }
+                                className={
+                                  e.publishedAt !== null
+                                    ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline'
+                                    : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline'
+                                }
+                              >
+                                {e.publishedAt !== null ? 'Unpublish' : 'Publish'}
+                              </button>
+                              <Link
+                                to={`/events/${e.id}/edit`}
+                                className="text-xs font-medium text-secondary underline-offset-4 hover:underline"
+                              >
+                                Edit
+                              </Link>
+                            </span>
                           </td>
                         </tr>
                       )

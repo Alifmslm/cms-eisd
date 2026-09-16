@@ -77,7 +77,7 @@
 - [ ] 11.4-review Review cover 16:9 validation prototype UX (accept/reject messaging) with local files (no backend) and collect feedback
 - [x] 11.5 Implement gallery image upload (max 4) and verify limit is enforced
 - [ ] 11.5-review Review gallery upload prototype UI fit (max 4 counter, ordering, removal) with local previews (no backend) and collect feedback
-- [ ] 11.6 Implement publish/unpublish toggle and verify status changes
+- [x] 11.6 Implement publish/unpublish toggle and verify status changes
 - [ ] 11.6-review Review publish/unpublish toggle prototype UX (optimistic state, badge flip) with mock data (no backend) and collect feedback
 - [ ] 11.7 Implement delete confirmation dialog and verify deletion works
 - [ ] 11.8 Review full Event Management prototype end-to-end (list → form → upload → publish → delete) with mock data and sign off UI fit
