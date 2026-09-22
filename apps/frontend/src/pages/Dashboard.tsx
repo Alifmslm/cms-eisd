@@ -1,5 +1,6 @@
 // Latest updates as a column table with zebra striping in the wrapper tint.
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Calendar,
   ChevronRight,
@@ -33,9 +34,9 @@ import {
 } from '@/lib/dashboard'
 
 const NAV = [
-  { label: 'Dashboard', icon: LayoutDashboard, active: true },
-  { label: 'Events', icon: Calendar, active: false },
-  { label: 'Articles', icon: Newspaper, active: false },
+  { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, active: true },
+  { label: 'Events', to: '/events', icon: Calendar, active: false },
+  { label: 'Articles', to: '/articles', icon: Newspaper, active: false },
 ]
 
 const PAGE_SIZE = 5
@@ -72,8 +73,9 @@ function Sidebar() {
         <p className="px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Menu</p>
         <nav className="mt-1 flex flex-col gap-0.5">
           {NAV.map((item) => (
-            <span
+            <Link
               key={item.label}
+              to={item.to}
               className={`relative flex h-8 items-center gap-2 rounded-md px-2 pl-3 text-[13px] font-medium ${
                 item.active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted'
               }`}
@@ -83,7 +85,7 @@ function Sidebar() {
               )}
               <item.icon className={`size-3.5 ${item.active ? 'text-secondary' : ''}`} />
               {item.label}
-            </span>
+            </Link>
           ))}
         </nav>
       </div>

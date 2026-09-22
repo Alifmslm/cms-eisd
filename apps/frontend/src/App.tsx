@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Events } from './pages/Events'
+import { Articles } from './pages/Articles'
 import { EventForm } from './pages/EventForm'
 
 function App() {
@@ -55,7 +56,7 @@ function App() {
             path="/articles"
             element={
               <ProtectedRoute>
-                <div>Articles</div>
+                <Articles />
               </ProtectedRoute>
             }
           />

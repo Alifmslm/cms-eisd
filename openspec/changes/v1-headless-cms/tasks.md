@@ -84,7 +84,7 @@
 
 ## 12. Frontend - Medium Article Management
 
-- [ ] 12.1 Create article list page and verify articles display correctly
+- [x] 12.1 Create article list page and verify articles display correctly
 - [ ] 12.1-review Review article list prototype UI fit with mock data (no backend) and collect feedback before 12.2
 - [ ] 12.2 Create add article form with URL input only and verify form works
 - [ ] 12.2-review Review add-article form prototype UI fit with mock data (no backend) and collect feedback
