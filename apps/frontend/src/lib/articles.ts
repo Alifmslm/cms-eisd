@@ -24,6 +24,23 @@ export async function fetchAdminArticles(): Promise<AdminArticle[]> {
 }
 
 /**
+ * Task 12.5 — deletes an article.
+ * Real path (VITE_USE_MOCKS=false): DELETE /api/articles/:id.
+ * A backend *response* error (e.g. 404) is rethrown so the page can
+ * report it; no response (backend stopped) and prototype mode resolve
+ * quietly so the page applies the in-memory removal.
+ */
+export async function deleteArticle(id: string): Promise<void> {
+  if (USE_MOCKS) return
+  try {
+    await api.delete(`/api/articles/${id}`)
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) throw err
+    // No response — backend stopped. Page keeps the in-memory removal.
+  }
+}
+
+/**
  * Task 12.4 — pure flip of the publish state (no backend).
  * Publish stamps `publishedAt` with now; unpublish returns to Draft (null).
  */

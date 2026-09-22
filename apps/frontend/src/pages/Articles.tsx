@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/context/useAuth'
 import {
+  deleteArticle,
   fetchAdminArticles,
   formatLong,
   toggleArticlePublish,
@@ -87,6 +88,12 @@ export function Articles() {
   const [publishFilter, setPublishFilter] = useState<PublishFilter>('All')
   const [query, setQuery] = useState('')
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  // 12.5: deletion is confirmed then applied (server DELETE when live,
+  // in-memory removal in prototype).
+  const [pendingDelete, setPendingDelete] = useState<AdminArticle | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -120,6 +127,34 @@ export function Articles() {
       setTogglingId(null)
     }
   }
+
+  // 12.5: confirmed deletion — DELETE on the server when live, then drop
+  // from local state in both modes (prototype removals reset on reload).
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleting) return
+    const title = pendingDelete.title
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteArticle(pendingDelete.id)
+      setArticles((prev) => prev.filter((a) => a.id !== pendingDelete.id))
+      setPendingDelete(null)
+      setDeletedNotice(`“${title}” was deleted${USE_MOCKS ? ' (mock — resets on reload)' : ''}.`)
+    } catch {
+      setDeleteError('The server refused the deletion — the article may already be gone. Try reloading the list.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!pendingDelete) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPendingDelete(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pendingDelete])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -157,8 +192,20 @@ export function Articles() {
           <Alert>
             <AlertTitle>Prototype data — no backend needed</AlertTitle>
             <AlertDescription>
-              Showing 5 fixtures covering Draft / Published. Publish toggles apply in memory
-              only (reset on reload). Set VITE_USE_MOCKS=false to hit the real API.
+              Showing 5 fixtures covering Draft / Published. Publish toggles and deletions
+              apply in memory only (reset on reload). Set VITE_USE_MOCKS=false to hit the real API.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {deletedNotice && (
+          <Alert>
+            <AlertTitle>Deleted</AlertTitle>
+            <AlertDescription>
+              <span className="mb-3 block">{deletedNotice}</span>
+              <Button variant="outline" size="sm" onClick={() => setDeletedNotice(null)}>
+                Dismiss
+              </Button>
             </AlertDescription>
           </Alert>
         )}
@@ -216,7 +263,7 @@ export function Articles() {
                       <th className="pb-2 font-medium">Article</th>
                       <th className="pb-2 font-medium whitespace-nowrap">Updated</th>
                       <th className="pb-2 text-right font-medium">Status</th>
-                      <th className="w-28 pb-2" />
+                      <th className="w-44 pb-2" />
                     </tr>
                   </thead>
                   <tbody>
@@ -259,30 +306,45 @@ export function Articles() {
                           <PublishBadge published={a.publishedAt !== null} />
                         </td>
                         <td className="py-3 pr-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => void togglePublish(a.id)}
-                            disabled={togglingId === a.id}
-                            title={
-                              a.publishedAt !== null
-                                ? `Unpublish “${a.title}” (back to Draft)`
-                                : `Publish “${a.title}” (goes live)`
-                            }
-                            aria-label={
-                              a.publishedAt !== null ? `Unpublish ${a.title}` : `Publish ${a.title}`
-                            }
-                            className={
-                              a.publishedAt !== null
-                                ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-40'
-                                : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline disabled:opacity-40'
-                            }
-                          >
-                            {togglingId === a.id
-                              ? 'Saving…'
-                              : a.publishedAt !== null
-                                ? 'Unpublish'
-                                : 'Publish'}
-                          </button>
+                          <span className="inline-flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => void togglePublish(a.id)}
+                              disabled={togglingId === a.id}
+                              title={
+                                a.publishedAt !== null
+                                  ? `Unpublish “${a.title}” (back to Draft)`
+                                  : `Publish “${a.title}” (goes live)`
+                              }
+                              aria-label={
+                                a.publishedAt !== null ? `Unpublish ${a.title}` : `Publish ${a.title}`
+                              }
+                              className={
+                                a.publishedAt !== null
+                                  ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-40'
+                                  : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline disabled:opacity-40'
+                              }
+                            >
+                              {togglingId === a.id
+                                ? 'Saving…'
+                                : a.publishedAt !== null
+                                  ? 'Unpublish'
+                                  : 'Publish'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeletedNotice(null)
+                                setDeleteError(null)
+                                setPendingDelete(a)
+                              }}
+                              title={`Delete “${a.title}” permanently`}
+                              aria-label={`Delete ${a.title}`}
+                              className="text-xs font-medium text-destructive underline-offset-4 hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -293,6 +355,57 @@ export function Articles() {
           </div>
         </section>
       </main>
+
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4"
+          onClick={() => {
+            if (!deleting) {
+              setPendingDelete(null)
+              setDeleteError(null)
+            }
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-article-title"
+            aria-describedby="delete-article-desc"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-lg"
+          >
+            <h2 id="delete-article-title" className="text-base font-semibold">
+              Delete “{pendingDelete.title}”?
+            </h2>
+            <p id="delete-article-desc" className="mt-1.5 text-sm text-muted-foreground">
+              This permanently removes the article
+              {pendingDelete.publishedAt !== null ? ', including its public page,' : ''} and it
+              can’t be undone — there is no revision history in V1.
+            </p>
+            {deleteError && (
+              <p className="mt-3 text-xs text-destructive" role="alert">
+                {deleteError}
+              </p>
+            )}
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                autoFocus
+                disabled={deleting}
+                onClick={() => {
+                  setPendingDelete(null)
+                  setDeleteError(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" disabled={deleting} onClick={() => void confirmDelete()}>
+                {deleting ? 'Deleting…' : 'Delete article'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
