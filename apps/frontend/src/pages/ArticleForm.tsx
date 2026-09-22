@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/useAuth'
 import {
+  ArticleSubmitError,
   createArticle,
+  submitErrorCopy,
   USE_MOCKS,
   validateArticleUrl,
   type AdminArticle,
@@ -72,6 +74,7 @@ export function ArticleForm() {
   const navigate = useNavigate()
   const [url, setUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<ArticleSubmitError | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<AdminArticle | null>(null)
 
@@ -79,11 +82,19 @@ export function ArticleForm() {
     ev.preventDefault()
     const problem = validateArticleUrl(url)
     setError(problem)
+    setSubmitError(null)
     if (problem) return
     setSubmitting(true)
     try {
       const entry = await createArticle(url)
       setCreated(entry)
+    } catch (err) {
+      setCreated(null)
+      setSubmitError(
+        err instanceof ArticleSubmitError
+          ? err
+          : new ArticleSubmitError('server', err instanceof Error ? err.message : 'Unknown error'),
+      )
     } finally {
       setSubmitting(false)
     }
@@ -92,6 +103,7 @@ export function ArticleForm() {
   const reset = () => {
     setUrl('')
     setError(null)
+    setSubmitError(null)
     setCreated(null)
   }
 
@@ -138,6 +150,7 @@ export function ArticleForm() {
                 onChange={(e) => {
                   setUrl(e.target.value)
                   if (error) setError(null)
+                  if (submitError) setSubmitError(null)
                   if (created) setCreated(null)
                 }}
                 placeholder="https://medium.com/@eisd/your-article-abc123"
@@ -156,6 +169,20 @@ export function ArticleForm() {
                 </p>
               )}
             </div>
+
+            {submitError &&
+              (() => {
+                const copy = submitErrorCopy(submitError.kind)
+                return (
+                  <Alert>
+                    <AlertTitle>{copy.title}</AlertTitle>
+                    <AlertDescription>
+                      <span className="mb-1 block break-all">{submitError.message}</span>
+                      <span className="block text-xs">{copy.hint}</span>
+                    </AlertDescription>
+                  </Alert>
+                )
+              })()}
 
             {created && (
               <Alert>
