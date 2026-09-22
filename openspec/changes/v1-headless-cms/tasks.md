@@ -86,7 +86,7 @@
 
 - [x] 12.1 Create article list page and verify articles display correctly
 - [ ] 12.1-review Review article list prototype UI fit with mock data (no backend) and collect feedback before 12.2
-- [ ] 12.2 Create add article form with URL input only and verify form works
+- [x] 12.2 Create add article form with URL input only and verify form works
 - [ ] 12.2-review Review add-article form prototype UI fit with mock data (no backend) and collect feedback
 - [ ] 12.3 Implement URL validation and error handling for invalid/unreachable URLs
 - [ ] 12.3-review Review URL validation prototype UX (invalid/unreachable/missing-metadata messaging) with mock data (no backend) and collect feedback
