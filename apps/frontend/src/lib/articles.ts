@@ -23,6 +23,41 @@ export async function fetchAdminArticles(): Promise<AdminArticle[]> {
   }
 }
 
+/**
+ * Task 12.4 — pure flip of the publish state (no backend).
+ * Publish stamps `publishedAt` with now; unpublish returns to Draft (null).
+ */
+export function togglePublishState(a: AdminArticle, now = new Date()): AdminArticle {
+  const published = a.publishedAt !== null
+  return {
+    ...a,
+    publishedAt: published ? null : now.toISOString(),
+    updatedAt: now.toISOString(),
+  }
+}
+
+/**
+ * Task 12.4 — toggles publish state, preferring the backend.
+ * Real path (VITE_USE_MOCKS=false): POST `:id/publish` / `:id/unpublish`
+ * and adopts the server's timestamp. Prototype path (or backend stopped):
+ * optimistic in-memory flip via `togglePublishState`.
+ */
+export async function toggleArticlePublish(a: AdminArticle, now = new Date()): Promise<AdminArticle> {
+  const publish = a.publishedAt === null
+  if (!USE_MOCKS) {
+    try {
+      const { data } = await api.post<AdminArticle>(
+        `/api/articles/${a.id}/${publish ? 'publish' : 'unpublish'}`,
+      )
+      return data
+    } catch {
+      // Fall through to the optimistic flip so the UI stays usable
+      // with the backend stopped.
+    }
+  }
+  return togglePublishState(a, now)
+}
+
 export function formatLong(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',

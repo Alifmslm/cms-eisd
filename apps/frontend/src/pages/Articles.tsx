@@ -18,6 +18,7 @@ import { useAuth } from '@/context/useAuth'
 import {
   fetchAdminArticles,
   formatLong,
+  toggleArticlePublish,
   USE_MOCKS,
   type AdminArticle,
 } from '@/lib/articles'
@@ -85,6 +86,7 @@ export function Articles() {
   const [loading, setLoading] = useState(true)
   const [publishFilter, setPublishFilter] = useState<PublishFilter>('All')
   const [query, setQuery] = useState('')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -105,6 +107,19 @@ export function Articles() {
     for (const a of articles) if (a.publishedAt !== null) published += 1
     return { total: articles.length, published, draft: articles.length - published }
   }, [articles])
+
+  // 12.4: adopt the server timestamp when live, optimistic flip in prototype.
+  const togglePublish = async (id: string) => {
+    const current = articles.find((a) => a.id === id)
+    if (!current || togglingId !== null) return
+    setTogglingId(id)
+    try {
+      const next = await toggleArticlePublish(current)
+      setArticles((prev) => prev.map((a) => (a.id === id ? next : a)))
+    } finally {
+      setTogglingId(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -142,8 +157,8 @@ export function Articles() {
           <Alert>
             <AlertTitle>Prototype data — no backend needed</AlertTitle>
             <AlertDescription>
-              Showing 5 fixtures covering Draft / Published. Set VITE_USE_MOCKS=false to hit the
-              real API.
+              Showing 5 fixtures covering Draft / Published. Publish toggles apply in memory
+              only (reset on reload). Set VITE_USE_MOCKS=false to hit the real API.
             </AlertDescription>
           </Alert>
         )}
@@ -201,6 +216,7 @@ export function Articles() {
                       <th className="pb-2 font-medium">Article</th>
                       <th className="pb-2 font-medium whitespace-nowrap">Updated</th>
                       <th className="pb-2 text-right font-medium">Status</th>
+                      <th className="w-28 pb-2" />
                     </tr>
                   </thead>
                   <tbody>
@@ -241,6 +257,32 @@ export function Articles() {
                         </td>
                         <td className="py-3 pr-2 text-right">
                           <PublishBadge published={a.publishedAt !== null} />
+                        </td>
+                        <td className="py-3 pr-2 text-right">
+                          <button
+                            type="button"
+                            onClick={() => void togglePublish(a.id)}
+                            disabled={togglingId === a.id}
+                            title={
+                              a.publishedAt !== null
+                                ? `Unpublish “${a.title}” (back to Draft)`
+                                : `Publish “${a.title}” (goes live)`
+                            }
+                            aria-label={
+                              a.publishedAt !== null ? `Unpublish ${a.title}` : `Publish ${a.title}`
+                            }
+                            className={
+                              a.publishedAt !== null
+                                ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-40'
+                                : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline disabled:opacity-40'
+                            }
+                          >
+                            {togglingId === a.id
+                              ? 'Saving…'
+                              : a.publishedAt !== null
+                                ? 'Unpublish'
+                                : 'Publish'}
+                          </button>
                         </td>
                       </tr>
                     ))}
