@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
@@ -123,10 +123,19 @@ export function Events() {
     return c
   }, [events])
 
+  // FLIP reorder animation: row elements by id + positions captured before
+  // the toggle, so moved rows glide instead of jumping.
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
+  const flipFirst = useRef<Map<string, DOMRect> | null>(null)
+
   // 11.6 prototype: optimistic in-memory flip. No backend call yet —
   // POST `:id/publish` / `:id/unpublish` lands with the real API.
-  const togglePublish = (id: string) =>
+  const togglePublish = (id: string) => {
+    const first = new Map<string, DOMRect>()
+    rowRefs.current.forEach((el, key) => first.set(key, el.getBoundingClientRect()))
+    flipFirst.current = first
     setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
+  }
 
   // 11.7 prototype: confirmed deletion, in memory only (DELETE /api/events/:id
   // lands with the real API, including R2 image cleanup per task 6.3).
@@ -149,6 +158,7 @@ export function Events() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
+    const nowTs = Date.now()
     return events
       .filter((e) => (statusFilter === 'All' ? true : getEventStatus(e) === statusFilter))
       .filter((e) => {
@@ -159,8 +169,46 @@ export function Events() {
       .filter((e) =>
         q ? `${e.title} ${e.slug} ${e.location}`.toLowerCase().includes(q) : true,
       )
-      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+      .sort((a, b) => {
+        // Drafts first, then live.
+        const draftDelta =
+          (a.publishedAt === null ? 0 : 1) - (b.publishedAt === null ? 0 : 1)
+        if (draftDelta !== 0) return draftDelta
+        // Past events (already ended) sink to the last.
+        const pastDelta =
+          (+new Date(a.endDate) < nowTs ? 1 : 0) - (+new Date(b.endDate) < nowTs ? 1 : 0)
+        if (pastDelta !== 0) return pastDelta
+        if (+new Date(a.endDate) < nowTs) {
+          // Both past: recently ended first.
+          return +new Date(b.endDate) - +new Date(a.endDate)
+        }
+        // Upcoming/ongoing: nearest start first.
+        return (
+          +new Date(a.startDate) - +new Date(b.startDate) ||
+          +new Date(b.updatedAt) - +new Date(a.updatedAt)
+        )
+      })
   }, [events, statusFilter, publishFilter, query])
+
+  // FLIP playback: after the order changes, glide each surviving row from
+  // its captured position to its new one. Transform-only (GPU), WAAPI so a
+  // second toggle mid-flight retargets instead of restarting.
+  useLayoutEffect(() => {
+    const first = flipFirst.current
+    flipFirst.current = null
+    if (!first) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    rowRefs.current.forEach((el, id) => {
+      const f = first.get(id)
+      if (!f) return
+      const dy = f.top - el.getBoundingClientRect().top
+      if (dy === 0) return
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], {
+        duration: 260,
+        easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+      })
+    })
+  }, [filtered])
 
   return (
     <div className="flex min-h-screen bg-white text-foreground">
@@ -253,6 +301,10 @@ export function Events() {
                       return (
                         <tr
                           key={e.id}
+                          ref={(el) => {
+                            if (el) rowRefs.current.set(e.id, el)
+                            else rowRefs.current.delete(e.id)
+                          }}
                           className="border-t border-border align-middle even:bg-[#F7F9FF]"
                         >
                           <td className="max-w-72 py-3 pr-3 pl-2">
@@ -277,6 +329,8 @@ export function Events() {
                             <span className="inline-flex items-center gap-3">
                               <button
                                 type="button"
+                                role="switch"
+                                aria-checked={e.publishedAt !== null}
                                 onClick={() => togglePublish(e.id)}
                                 title={
                                   e.publishedAt !== null
@@ -288,13 +342,28 @@ export function Events() {
                                     ? `Unpublish ${e.title}`
                                     : `Publish ${e.title}`
                                 }
-                                className={
-                                  e.publishedAt !== null
-                                    ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline'
-                                    : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline'
-                                }
+                                className="flex items-center gap-2"
                               >
-                                {e.publishedAt !== null ? 'Unpublish' : 'Publish'}
+                                <span
+                                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                                    e.publishedAt !== null ? 'bg-success' : 'bg-border'
+                                  }`}
+                                >
+                                  <span
+                                    className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform ${
+                                      e.publishedAt !== null ? 'translate-x-4' : ''
+                                    }`}
+                                  />
+                                </span>
+                                <span
+                                  className={`text-xs font-medium ${
+                                    e.publishedAt !== null
+                                      ? 'text-success-foreground'
+                                      : 'text-muted-foreground'
+                                  }`}
+                                >
+                                  {e.publishedAt !== null ? 'Live' : 'Draft'}
+                                </span>
                               </button>
                               <Link
                                 to={`/events/${e.id}/edit`}
