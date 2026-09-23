@@ -6,6 +6,9 @@ interface FilterDropdownProps<T extends string> {
   value: T
   options: readonly T[]
   onPick: (value: T) => void
+  /** Menu placement. `up` floats above the button (avoids covering content below). */
+  direction?: 'down' | 'up'
+  align?: 'left' | 'right'
 }
 
 /** Compact dropdown used for list-page filters (status, publish state, …). */
@@ -14,6 +17,8 @@ export function FilterDropdown<T extends string>({
   value,
   options,
   onPick,
+  direction = 'down',
+  align = 'left',
 }: FilterDropdownProps<T>) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -53,7 +58,9 @@ export function FilterDropdown<T extends string>({
         <div
           role="listbox"
           aria-label={label}
-          className="absolute top-full left-0 z-30 mt-1 min-w-36 rounded-lg border border-border bg-white p-1 shadow-lg"
+          className={`absolute z-30 mt-1 min-w-36 rounded-lg border border-border bg-white p-1 shadow-lg ${
+            direction === 'up' ? 'bottom-full mb-1' : 'top-full'
+          } ${align === 'right' ? 'right-0' : 'left-0'}`}
         >
           {options.map((o) => {
             const selected = o === value

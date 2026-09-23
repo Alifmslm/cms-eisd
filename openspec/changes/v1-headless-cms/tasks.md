@@ -68,7 +68,7 @@
 ## 11. Frontend - Event Management
 
 - [x] 11.1 Create event list page with status indicators and verify events display correctly
-- [ ] 11.1-review Review event list prototype UI fit with mock data (no backend) and collect feedback before 11.2
+- [x] 11.1-review Review event list prototype UI fit with mock data (no backend) and collect feedback before 11.2
 - [x] 11.2 Create event create/edit form with all required fields and verify form validation works
 - [ ] 11.2-review Review create/edit form prototype UI fit with mock data (no backend) and collect feedback
 - [x] 11.3 Implement image upload component with preview and progress indicator and verify upload works

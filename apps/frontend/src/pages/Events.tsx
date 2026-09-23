@@ -267,6 +267,7 @@ export function Events() {
                 value={publishFilter}
                 options={PUBLISH_FILTERS}
                 onPick={setPublishFilter}
+                align="right"
               />
             </div>
 
