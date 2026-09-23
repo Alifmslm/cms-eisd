@@ -5,9 +5,12 @@ import {
   FlaskConical,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Newspaper,
+  Pencil,
   Plus,
   Search,
+  Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
@@ -78,8 +81,8 @@ function Sidebar() {
 
 function ComputedBadge({ status }: { status: EventStatus }) {
   if (status === 'Incoming') return <Badge variant="info-light">Incoming</Badge>
-  if (status === 'On Going') return <Badge variant="success-light">On Going</Badge>
-  return <Badge variant="invert-light">Finished</Badge>
+  if (status === 'On Going') return <Badge variant="warning-light">On Going</Badge>
+  return <Badge variant="success-light">Finished</Badge>
 }
 
 function PublishBadge({ published }: { published: boolean }) {
@@ -255,7 +258,8 @@ export function Events() {
                           <td className="max-w-72 py-3 pr-3 pl-2">
                             <div className="flex min-w-0 flex-col">
                               <span className="block truncate font-medium">{e.title}</span>
-                              <span className="block truncate text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                                <MapPin className="size-3 shrink-0" />
                                 {e.location}
                               </span>
                             </div>
@@ -294,9 +298,11 @@ export function Events() {
                               </button>
                               <Link
                                 to={`/events/${e.id}/edit`}
-                                className="text-xs font-medium text-secondary underline-offset-4 hover:underline"
+                                title={`Edit “${e.title}”`}
+                                aria-label={`Edit ${e.title}`}
+                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-secondary/10 hover:text-secondary"
                               >
-                                Edit
+                                <Pencil className="size-3.5" />
                               </Link>
                               <button
                                 type="button"
@@ -306,9 +312,9 @@ export function Events() {
                                 }}
                                 title={`Delete “${e.title}” permanently`}
                                 aria-label={`Delete ${e.title}`}
-                                className="text-xs font-medium text-destructive underline-offset-4 hover:underline"
+                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                               >
-                                Delete
+                                <Trash2 className="size-3.5" />
                               </button>
                             </span>
                           </td>
