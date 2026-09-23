@@ -20,7 +20,6 @@ import {
   formatShort,
   getEventStatus,
   togglePublishState,
-  USE_MOCKS,
   type AdminEvent,
   type EventStatus,
 } from '@/lib/events'
@@ -178,17 +177,6 @@ export function Events() {
             </Button>
           </Link>
         </div>
-
-        {USE_MOCKS && (
-          <Alert>
-            <AlertTitle>Prototype data — no backend needed</AlertTitle>
-            <AlertDescription>
-              Showing 6 fixtures covering Incoming / On Going / Finished + Draft / Published. Publish
-              toggles and deletions apply in memory only (reset on reload). Set VITE_USE_MOCKS=false to
-              hit the real API.
-            </AlertDescription>
-          </Alert>
-        )}
 
         {deletedNotice && (
           <Alert>
