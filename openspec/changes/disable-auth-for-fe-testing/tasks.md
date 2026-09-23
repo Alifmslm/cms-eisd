@@ -4,7 +4,7 @@
 - [x] 1.2 Add a visible "auth disabled for UI testing" marker on the UI shell and verify it renders on every formerly-guarded page
 - [x] 1.3 Verify unauthenticated access: open `/`, `/dashboard?variant=a|b|c`, `/events`, and `/articles` with no session and confirm each renders without redirecting to `/login`
 - [x] 1.4 Verify no collateral: confirm `/login` behavior is unchanged and backend endpoints still reject unauthenticated requests
-- [ ] 1.5 Temporarily unwire dashboard BE for UI testing: in `apps/frontend/src/pages/Dashboard.tsx` replace the `fetchDashboard()` (`GET /api/dashboard`) call with a clearly-marked `TEMP (disable-auth-for-fe-testing) — REVERT ME` static mock `DashboardResponse` so `/dashboard` renders the full UI (stat cards, latest updates, upcoming events) with no session/backend, and verify it renders without the "Could not load dashboard data" error state
+- [x] 1.5 Temporarily unwire dashboard BE for UI testing: in `apps/frontend/src/pages/Dashboard.tsx` replace the `fetchDashboard()` (`GET /api/dashboard`) call with a clearly-marked `TEMP (disable-auth-for-fe-testing) — REVERT ME` static mock `DashboardResponse` so `/dashboard` renders the full UI (stat cards, latest updates, upcoming events) with no session/backend, and verify it renders without the "Could not load dashboard data" error state
 
 ## 2. Re-enable Auth (after UI testing)
 
