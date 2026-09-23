@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
+  Eye,
+  FileText,
   FlaskConical,
   LayoutDashboard,
   LogOut,
@@ -13,6 +15,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
+import { IconTile } from '@/components/reui/icon-tile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -117,10 +120,15 @@ export function Events() {
     }
   }, [])
 
-  const counts = useMemo(() => {
-    const c: Record<EventStatus, number> = { Incoming: 0, 'On Going': 0, Finished: 0 }
-    for (const e of events) c[getEventStatus(e)] += 1
-    return c
+  // Dashboard-style stat cards: totals split by computed status.
+  const stats = useMemo(() => {
+    let live = 0
+    for (const e of events) if (e.publishedAt !== null) live += 1
+    return [
+      { label: 'Total events', value: events.length, icon: Calendar, tileClassName: 'bg-amber-500 text-white' },
+      { label: 'Live', value: live, icon: Eye, tileClassName: 'bg-emerald-500 text-white' },
+      { label: 'Drafts', value: events.length - live, icon: FileText, tileClassName: 'bg-cyan-600 text-white' },
+    ]
   }, [events])
 
   // FLIP reorder animation: row elements by id + positions captured before
@@ -217,10 +225,7 @@ export function Events() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">Events</h1>
-            <p className="text-sm text-muted-foreground">
-              {events.length} total · {counts['Incoming']} incoming · {counts['On Going']} on going ·{' '}
-              {counts['Finished']} finished
-            </p>
+            <p className="text-sm text-muted-foreground">Schedules and publish states</p>
           </div>
           <Link to="/events/new">
             <Button className="text-white">
@@ -228,6 +233,25 @@ export function Events() {
             </Button>
           </Link>
         </div>
+
+        {/* Stat cards in #F7F9FF wrapper — same style as the dashboard. */}
+        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+          <div className="grid grid-cols-3 gap-1">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">{s.label}</p>
+                  <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end justify-start">
+                  <IconTile size="sm" variant="solid" className={s.tileClassName}>
+                    <s.icon className="size-4" />
+                  </IconTile>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {deletedNotice && (
           <Alert>
