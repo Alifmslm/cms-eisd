@@ -14,6 +14,7 @@ import { Badge } from '@/components/reui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { useAuth } from '@/context/useAuth'
 import {
   fetchAdminEvents,
@@ -192,52 +193,31 @@ export function Events() {
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-2 rounded-lg bg-white py-2">
               <div className="relative mr-auto w-full max-w-64">
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search title, slug, location…"
+                  aria-label="Search events"
                   className="pl-8"
                 />
               </div>
-              <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by computed status">
-                {STATUS_FILTERS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    role="tab"
-                    aria-selected={statusFilter === s}
-                    onClick={() => setStatusFilter(s)}
-                    className={`h-7 rounded-full border px-3 text-xs font-medium transition-colors ${
-                      statusFilter === s
-                        ? 'border-secondary bg-secondary text-secondary-foreground'
-                        : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5" role="tablist" aria-label="Filter by publish state">
-                {PUBLISH_FILTERS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    role="tab"
-                    aria-selected={publishFilter === p}
-                    onClick={() => setPublishFilter(p)}
-                    className={`h-7 rounded-full border px-3 text-xs font-medium transition-colors ${
-                      publishFilter === p
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Status"
+                value={statusFilter}
+                options={STATUS_FILTERS}
+                onPick={setStatusFilter}
+              />
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Publish"
+                value={publishFilter}
+                options={PUBLISH_FILTERS}
+                onPick={setPublishFilter}
+              />
             </div>
 
             {loading ? (
