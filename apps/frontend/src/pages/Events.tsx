@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   Calendar,
   FlaskConical,
-  ImageIcon,
   LayoutDashboard,
   LogOut,
   Newspaper,
@@ -254,20 +253,10 @@ export function Events() {
                           className="border-t border-border align-middle even:bg-[#F7F9FF]"
                         >
                           <td className="max-w-72 py-3 pr-3 pl-2">
-                            <div className="flex items-center gap-3">
-                              <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted text-muted-foreground">
-                                {e.coverImage ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={e.coverImage} alt="" className="size-full object-cover" />
-                                ) : (
-                                  <ImageIcon className="size-4" />
-                                )}
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block truncate font-medium">{e.title}</span>
-                                <span className="block truncate text-xs text-muted-foreground">
-                                  /{e.slug} · {e.location}
-                                </span>
+                            <div className="flex min-w-0 flex-col">
+                              <span className="block truncate font-medium">{e.title}</span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {e.location}
                               </span>
                             </div>
                           </td>
