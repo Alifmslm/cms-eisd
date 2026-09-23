@@ -27,11 +27,85 @@ import {
 import { useAuth } from '@/context/useAuth'
 import {
   eventStatus,
-  fetchDashboard,
   type DashboardArticle,
   type DashboardEvent,
   type DashboardResponse,
 } from '@/lib/dashboard'
+
+// TEMP (disable-auth-for-fe-testing) — REVERT ME: dashboard BE unwired for
+// UI testing. Static mock replaces fetchDashboard() (GET /api/dashboard,
+// auth-guarded → 401 with no session → "Could not load dashboard data").
+// Task 2.2 rewire: delete MOCK_DASHBOARD below and restore the
+// fetchDashboard() calls in `load` + `useEffect`.
+const MOCK_DASHBOARD: DashboardResponse = {
+  totalEvents: 3,
+  totalArticles: 3,
+  publishedEvents: 2,
+  draftEvents: 1,
+  publishedArticles: 2,
+  draftArticles: 1,
+  upcomingEvents: 2,
+  upcomingEventsList: [
+    {
+      id: 'evt-mock-1',
+      slug: 'mock-open-day',
+      title: 'Mock Open Day',
+      location: 'Main Hall',
+      startDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+      publishedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'evt-mock-2',
+      slug: 'mock-workshop',
+      title: 'Mock Workshop (Draft)',
+      location: 'Lab 2',
+      startDate: new Date(Date.now() + 86400000 * 5).toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 6).toISOString(),
+      publishedAt: null,
+      updatedAt: new Date().toISOString(),
+    },
+  ],
+  latestEvents: [
+    {
+      id: 'evt-mock-1',
+      slug: 'mock-open-day',
+      title: 'Mock Open Day',
+      location: 'Main Hall',
+      startDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+      publishedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'evt-mock-3',
+      slug: 'mock-past-seminar',
+      title: 'Mock Past Seminar',
+      location: 'Room 101',
+      startDate: new Date(Date.now() - 86400000 * 10).toISOString(),
+      endDate: new Date(Date.now() - 86400000 * 9).toISOString(),
+      publishedAt: new Date().toISOString(),
+      updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ],
+  latestArticles: [
+    {
+      id: 'art-mock-1',
+      title: 'Mock Published Article',
+      url: 'https://example.com/mock-article',
+      publishedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'art-mock-2',
+      title: 'Mock Draft Article',
+      url: 'https://example.com/mock-draft',
+      publishedAt: null,
+      updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+  ],
+}
 
 const NAV = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, active: true },
@@ -230,7 +304,9 @@ export function Dashboard() {
     setLoading(true)
     setError(false)
     try {
-      setDashboard(await fetchDashboard())
+      // TEMP (disable-auth-for-fe-testing) — REVERT ME: use MOCK_DASHBOARD,
+      // restore `await fetchDashboard()` in task 2.2.
+      setDashboard(MOCK_DASHBOARD)
       setPage(0)
     } catch {
       setError(true)
@@ -240,24 +316,11 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    let live = true
-    ;(async () => {
-      try {
-        const data = await fetchDashboard()
-        if (live) {
-          setDashboard(data)
-          setLoading(false)
-        }
-      } catch {
-        if (live) {
-          setError(true)
-          setLoading(false)
-        }
-      }
-    })()
-    return () => {
-      live = false
-    }
+    // TEMP (disable-auth-for-fe-testing) — REVERT ME: mock instead of
+    // fetchDashboard() so /dashboard renders with no session/backend.
+    // Task 2.2 rewire restores the live fetch.
+    setDashboard(MOCK_DASHBOARD)
+    setLoading(false)
   }, [])
 
   // Defensive client-side ordering: soonest start first, most recently updated first.

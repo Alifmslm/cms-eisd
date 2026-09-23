@@ -1,26 +1,31 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
+  Eye,
+  FileText,
   FlaskConical,
-  ImageIcon,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Newspaper,
+  Pencil,
   Plus,
   Search,
+  Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
+import { IconTile } from '@/components/reui/icon-tile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { useAuth } from '@/context/useAuth'
 import {
   fetchAdminEvents,
   formatShort,
   getEventStatus,
   togglePublishState,
-  USE_MOCKS,
   type AdminEvent,
   type EventStatus,
 } from '@/lib/events'
@@ -79,8 +84,8 @@ function Sidebar() {
 
 function ComputedBadge({ status }: { status: EventStatus }) {
   if (status === 'Incoming') return <Badge variant="info-light">Incoming</Badge>
-  if (status === 'On Going') return <Badge variant="success-light">On Going</Badge>
-  return <Badge variant="invert-light">Finished</Badge>
+  if (status === 'On Going') return <Badge variant="warning-light">On Going</Badge>
+  return <Badge variant="success-light">Finished</Badge>
 }
 
 function PublishBadge({ published }: { published: boolean }) {
@@ -115,16 +120,30 @@ export function Events() {
     }
   }, [])
 
-  const counts = useMemo(() => {
-    const c: Record<EventStatus, number> = { Incoming: 0, 'On Going': 0, Finished: 0 }
-    for (const e of events) c[getEventStatus(e)] += 1
-    return c
+  // Dashboard-style stat cards: totals split by computed status.
+  const stats = useMemo(() => {
+    let live = 0
+    for (const e of events) if (e.publishedAt !== null) live += 1
+    return [
+      { label: 'Total events', value: events.length, icon: Calendar, tileClassName: 'bg-amber-500 text-white' },
+      { label: 'Live', value: live, icon: Eye, tileClassName: 'bg-emerald-500 text-white' },
+      { label: 'Drafts', value: events.length - live, icon: FileText, tileClassName: 'bg-cyan-600 text-white' },
+    ]
   }, [events])
+
+  // FLIP reorder animation: row elements by id + positions captured before
+  // the toggle, so moved rows glide instead of jumping.
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
+  const flipFirst = useRef<Map<string, DOMRect> | null>(null)
 
   // 11.6 prototype: optimistic in-memory flip. No backend call yet —
   // POST `:id/publish` / `:id/unpublish` lands with the real API.
-  const togglePublish = (id: string) =>
+  const togglePublish = (id: string) => {
+    const first = new Map<string, DOMRect>()
+    rowRefs.current.forEach((el, key) => first.set(key, el.getBoundingClientRect()))
+    flipFirst.current = first
     setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
+  }
 
   // 11.7 prototype: confirmed deletion, in memory only (DELETE /api/events/:id
   // lands with the real API, including R2 image cleanup per task 6.3).
@@ -147,6 +166,7 @@ export function Events() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
+    const nowTs = Date.now()
     return events
       .filter((e) => (statusFilter === 'All' ? true : getEventStatus(e) === statusFilter))
       .filter((e) => {
@@ -157,8 +177,46 @@ export function Events() {
       .filter((e) =>
         q ? `${e.title} ${e.slug} ${e.location}`.toLowerCase().includes(q) : true,
       )
-      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+      .sort((a, b) => {
+        // Drafts first, then live.
+        const draftDelta =
+          (a.publishedAt === null ? 0 : 1) - (b.publishedAt === null ? 0 : 1)
+        if (draftDelta !== 0) return draftDelta
+        // Past events (already ended) sink to the last.
+        const pastDelta =
+          (+new Date(a.endDate) < nowTs ? 1 : 0) - (+new Date(b.endDate) < nowTs ? 1 : 0)
+        if (pastDelta !== 0) return pastDelta
+        if (+new Date(a.endDate) < nowTs) {
+          // Both past: recently ended first.
+          return +new Date(b.endDate) - +new Date(a.endDate)
+        }
+        // Upcoming/ongoing: nearest start first.
+        return (
+          +new Date(a.startDate) - +new Date(b.startDate) ||
+          +new Date(b.updatedAt) - +new Date(a.updatedAt)
+        )
+      })
   }, [events, statusFilter, publishFilter, query])
+
+  // FLIP playback: after the order changes, glide each surviving row from
+  // its captured position to its new one. Transform-only (GPU), WAAPI so a
+  // second toggle mid-flight retargets instead of restarting.
+  useLayoutEffect(() => {
+    const first = flipFirst.current
+    flipFirst.current = null
+    if (!first) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    rowRefs.current.forEach((el, id) => {
+      const f = first.get(id)
+      if (!f) return
+      const dy = f.top - el.getBoundingClientRect().top
+      if (dy === 0) return
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], {
+        duration: 260,
+        easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+      })
+    })
+  }, [filtered])
 
   return (
     <div className="flex min-h-screen bg-white text-foreground">
@@ -167,10 +225,7 @@ export function Events() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">Events</h1>
-            <p className="text-sm text-muted-foreground">
-              {events.length} total · {counts['Incoming']} incoming · {counts['On Going']} on going ·{' '}
-              {counts['Finished']} finished
-            </p>
+            <p className="text-sm text-muted-foreground">Schedules and publish states</p>
           </div>
           <Link to="/events/new">
             <Button className="text-white">
@@ -179,16 +234,24 @@ export function Events() {
           </Link>
         </div>
 
-        {USE_MOCKS && (
-          <Alert>
-            <AlertTitle>Prototype data — no backend needed</AlertTitle>
-            <AlertDescription>
-              Showing 6 fixtures covering Incoming / On Going / Finished + Draft / Published. Publish
-              toggles and deletions apply in memory only (reset on reload). Set VITE_USE_MOCKS=false to
-              hit the real API.
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Stat cards in #F7F9FF wrapper — same style as the dashboard. */}
+        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+          <div className="grid grid-cols-3 gap-1">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">{s.label}</p>
+                  <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end justify-start">
+                  <IconTile size="sm" variant="solid" className={s.tileClassName}>
+                    <s.icon className="size-4" />
+                  </IconTile>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {deletedNotice && (
           <Alert>
@@ -203,53 +266,33 @@ export function Events() {
         )}
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
-          <div className="flex flex-col gap-1 rounded-lg border border-[#EBEBEB] bg-white p-5">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-2 rounded-lg bg-white py-2">
               <div className="relative mr-auto w-full max-w-64">
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search title, slug, location…"
+                  aria-label="Search events"
                   className="pl-8"
                 />
               </div>
-              <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by computed status">
-                {STATUS_FILTERS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    role="tab"
-                    aria-selected={statusFilter === s}
-                    onClick={() => setStatusFilter(s)}
-                    className={`h-7 rounded-full border px-3 text-xs font-medium transition-colors ${
-                      statusFilter === s
-                        ? 'border-secondary bg-secondary text-secondary-foreground'
-                        : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5" role="tablist" aria-label="Filter by publish state">
-                {PUBLISH_FILTERS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    role="tab"
-                    aria-selected={publishFilter === p}
-                    onClick={() => setPublishFilter(p)}
-                    className={`h-7 rounded-full border px-3 text-xs font-medium transition-colors ${
-                      publishFilter === p
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Status"
+                value={statusFilter}
+                options={STATUS_FILTERS}
+                onPick={setStatusFilter}
+              />
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Publish"
+                value={publishFilter}
+                options={PUBLISH_FILTERS}
+                onPick={setPublishFilter}
+                align="right"
+              />
             </div>
 
             {loading ? (
@@ -283,23 +326,18 @@ export function Events() {
                       return (
                         <tr
                           key={e.id}
+                          ref={(el) => {
+                            if (el) rowRefs.current.set(e.id, el)
+                            else rowRefs.current.delete(e.id)
+                          }}
                           className="border-t border-border align-middle even:bg-[#F7F9FF]"
                         >
                           <td className="max-w-72 py-3 pr-3 pl-2">
-                            <div className="flex items-center gap-3">
-                              <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted text-muted-foreground">
-                                {e.coverImage ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={e.coverImage} alt="" className="size-full object-cover" />
-                                ) : (
-                                  <ImageIcon className="size-4" />
-                                )}
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block truncate font-medium">{e.title}</span>
-                                <span className="block truncate text-xs text-muted-foreground">
-                                  /{e.slug} · {e.location}
-                                </span>
+                            <div className="flex min-w-0 flex-col">
+                              <span className="block truncate font-medium">{e.title}</span>
+                              <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                                <MapPin className="size-3 shrink-0" />
+                                {e.location}
                               </span>
                             </div>
                           </td>
@@ -316,6 +354,8 @@ export function Events() {
                             <span className="inline-flex items-center gap-3">
                               <button
                                 type="button"
+                                role="switch"
+                                aria-checked={e.publishedAt !== null}
                                 onClick={() => togglePublish(e.id)}
                                 title={
                                   e.publishedAt !== null
@@ -327,19 +367,36 @@ export function Events() {
                                     ? `Unpublish ${e.title}`
                                     : `Publish ${e.title}`
                                 }
-                                className={
-                                  e.publishedAt !== null
-                                    ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline'
-                                    : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline'
-                                }
+                                className="flex items-center gap-2"
                               >
-                                {e.publishedAt !== null ? 'Unpublish' : 'Publish'}
+                                <span
+                                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                                    e.publishedAt !== null ? 'bg-success' : 'bg-border'
+                                  }`}
+                                >
+                                  <span
+                                    className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform ${
+                                      e.publishedAt !== null ? 'translate-x-4' : ''
+                                    }`}
+                                  />
+                                </span>
+                                <span
+                                  className={`text-xs font-medium ${
+                                    e.publishedAt !== null
+                                      ? 'text-success-foreground'
+                                      : 'text-muted-foreground'
+                                  }`}
+                                >
+                                  {e.publishedAt !== null ? 'Live' : 'Draft'}
+                                </span>
                               </button>
                               <Link
                                 to={`/events/${e.id}/edit`}
-                                className="text-xs font-medium text-secondary underline-offset-4 hover:underline"
+                                title={`Edit “${e.title}”`}
+                                aria-label={`Edit ${e.title}`}
+                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-secondary/10 hover:text-secondary"
                               >
-                                Edit
+                                <Pencil className="size-3.5" />
                               </Link>
                               <button
                                 type="button"
@@ -349,9 +406,9 @@ export function Events() {
                                 }}
                                 title={`Delete “${e.title}” permanently`}
                                 aria-label={`Delete ${e.title}`}
-                                className="text-xs font-medium text-destructive underline-offset-4 hover:underline"
+                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                               >
-                                Delete
+                                <Trash2 className="size-3.5" />
                               </button>
                             </span>
                           </td>
