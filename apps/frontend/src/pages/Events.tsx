@@ -191,7 +191,7 @@ export function Events() {
         )}
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
-          <div className="flex flex-col gap-1 rounded-lg border border-[#EBEBEB] bg-white p-5">
+          <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative mr-auto w-full max-w-64">
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
