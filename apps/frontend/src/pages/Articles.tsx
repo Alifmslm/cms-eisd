@@ -195,7 +195,17 @@ export function Articles() {
       .filter((a) =>
         q ? `${a.title} ${a.description} ${a.url}`.toLowerCase().includes(q) : true,
       )
-      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+      .sort((a, b) => {
+        // Same rule as the events table: drafts first, then newest first.
+        // (Articles have no schedule/end date, so there is no past-last tier.)
+        const draftDelta =
+          (a.publishedAt === null ? 0 : 1) - (b.publishedAt === null ? 0 : 1)
+        if (draftDelta !== 0) return draftDelta
+        return (
+          +new Date(b.publishedDate) - +new Date(a.publishedDate) ||
+          +new Date(b.updatedAt) - +new Date(a.updatedAt)
+        )
+      })
   }, [articles, publishFilter, query])
 
   return (
