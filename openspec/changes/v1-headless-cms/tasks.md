@@ -72,7 +72,7 @@
 - [x] 11.2 Create event create/edit form with all required fields and verify form validation works
 - [x] 11.2-review Review create/edit form prototype UI fit with mock data (no backend) and collect feedback
 - [x] 11.3 Implement image upload component with preview and progress indicator and verify upload works
-- [ ] 11.3-review Review image upload prototype UI fit with local previews and mocked progress (no backend) and collect feedback
+- [x] 11.3-review Review image upload prototype UI fit with local previews and mocked progress (no backend) and collect feedback
 - [x] 11.4 Implement cover image aspect ratio validation (16:9) and verify invalid ratios are rejected
 - [ ] 11.4-review Review cover 16:9 validation prototype UX (accept/reject messaging) with local files (no backend) and collect feedback
 - [x] 11.5 Implement gallery image upload (max 4) and verify limit is enforced
