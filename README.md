@@ -61,13 +61,6 @@ The CMS supports two user roles:
 - Edit/delete buttons are hidden in the UI
 - Write API endpoints return 403 Forbidden
 
-### Default Credentials
-The seed script creates a default admin account:
-```
-username: admin
-password: admin123
-```
-
 ### Role-Based API Access
 - **Read endpoints** (GET): Accessible by all authenticated users
 - **Write endpoints** (POST, PUT, DELETE): Restricted to admin role only

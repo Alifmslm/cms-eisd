@@ -23,6 +23,58 @@
   }
 }
 
+/* Filter menu + dialog entrances: fade with a small scale, eased out. */
+@keyframes menu-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.menu-enter {
+  animation: menu-enter 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dialog-enter {
+  animation: dialog-enter 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.overlay-enter {
+  animation: overlay-enter 200ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-enter,
+  .dialog-enter,
+  .overlay-enter {
+    animation: none;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* EISD Laboratory CMS tokens (design_system.md):
@@ -117,4 +169,25 @@
 
 @theme {
     --font-sans: "Stack Sans Text", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Info toast (sonner, bottom-right): card surface, accent border, colored
+ * status icons. See design_system.md § Toasts. */
+[data-sonner-toast][data-styled='true'] {
+  background: var(--color-card);
+  border: 1px solid var(--color-accent);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  font-family: var(--font-sans);
+}
+[data-sonner-toast][data-type='success'] [data-icon] {
+  color: var(--color-success);
+}
+[data-sonner-toast][data-type='error'] [data-icon] {
+  color: var(--color-destructive);
+}
+[data-sonner-toast][data-type='warning'] [data-icon] {
+  color: var(--color-warning);
+}
+[data-sonner-toast][data-type='info'] [data-icon] {
+  color: var(--color-info);
 }

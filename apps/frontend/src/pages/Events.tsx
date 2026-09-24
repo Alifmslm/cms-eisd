@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   Calendar,
   Eye,
@@ -116,7 +117,6 @@ export function Events() {
   const [page, setPage] = useState(0)
   // 11.7 prototype: deletion is confirmed then applied in memory only.
   const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null)
-  const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -143,19 +143,16 @@ export function Events() {
     ]
   }, [events])
 
-  // FLIP reorder animation: row elements by id + positions captured before
-  // the toggle, so moved rows glide instead of jumping.
+  // FLIP reorder animation: row elements by id. Positions are compared on
+  // every visible-order change (toggle, filter, search, page), so moved rows
+  // always glide instead of jumping.
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
-  const flipFirst = useRef<Map<string, DOMRect> | null>(null)
+  const prevRects = useRef(new Map<string, DOMRect>())
 
   // 11.6 prototype: optimistic in-memory flip. No backend call yet —
   // POST `:id/publish` / `:id/unpublish` lands with the real API.
-  const togglePublish = (id: string) => {
-    const first = new Map<string, DOMRect>()
-    rowRefs.current.forEach((el, key) => first.set(key, el.getBoundingClientRect()))
-    flipFirst.current = first
+  const togglePublish = (id: string) =>
     setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
-  }
 
   // 11.7 prototype: confirmed deletion, in memory only (DELETE /api/events/:id
   // lands with the real API, including R2 image cleanup per task 6.3).
@@ -164,7 +161,7 @@ export function Events() {
     const title = pendingDelete.title
     setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id))
     setPendingDelete(null)
-    setDeletedNotice(`“${title}” was deleted.`)
+    toast.success(`“${title}” was deleted.`)
   }
 
   useEffect(() => {
@@ -233,16 +230,25 @@ export function Events() {
           .sort((a, b) => (a as number) - (b as number))
           .flatMap((n, i, a) => (i > 0 && (n as number) - (a[i - 1] as number) > 1 ? (['gap', n] as (number | 'gap')[]) : [n]))
 
-  // FLIP playback: after the order changes, glide each surviving row from
-  // its captured position to its new one. Transform-only (GPU), WAAPI so a
-  // second toggle mid-flight retargets instead of restarting.
+  // FLIP playback: after the visible order changes (toggle, filter,
+  // search), glide each surviving row from its previous position to its new
+  // one. Page changes are excluded — remounted rows already cascade in via
+  // CSS, so animating them again would double up. Transform-only (GPU),
+  // WAAPI so a second change mid-flight retargets instead of restarting.
+  const prevPage = useRef(safePage)
   useLayoutEffect(() => {
-    const first = flipFirst.current
-    flipFirst.current = null
-    if (!first) return
+    const next = new Map<string, DOMRect>()
+    rowRefs.current.forEach((el, id) => next.set(id, el.getBoundingClientRect()))
+    const prev = prevRects.current
+    prevRects.current = next
+    if (prevPage.current !== safePage) {
+      prevPage.current = safePage
+      return
+    }
+    if (prev.size === 0) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     rowRefs.current.forEach((el, id) => {
-      const f = first.get(id)
+      const f = prev.get(id)
       if (!f) return
       const dy = f.top - el.getBoundingClientRect().top
       if (dy === 0) return
@@ -251,7 +257,7 @@ export function Events() {
         easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
       })
     })
-  }, [filtered])
+  }, [filtered, safePage])
 
   return (
     <div className="flex min-h-screen bg-white text-foreground">
@@ -287,18 +293,6 @@ export function Events() {
             ))}
           </div>
         </section>
-
-        {deletedNotice && (
-          <Alert>
-            <AlertTitle>Deleted</AlertTitle>
-            <AlertDescription>
-              <span className="mb-3 block">{deletedNotice}</span>
-              <Button variant="outline" size="sm" onClick={() => setDeletedNotice(null)}>
-                Dismiss
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
@@ -437,10 +431,7 @@ export function Events() {
                               </Link>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setDeletedNotice(null)
-                                  setPendingDelete(e)
-                                }}
+                                onClick={() => setPendingDelete(e)}
                                 title={`Delete “${e.title}” permanently`}
                                 aria-label={`Delete ${e.title}`}
                                 className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"

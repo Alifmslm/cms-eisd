@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   Calendar,
@@ -17,7 +18,6 @@ import {
   ArticleSubmitError,
   createArticle,
   submitErrorCopy,
-  USE_MOCKS,
   validateArticleUrl,
   type AdminArticle,
 } from '@/lib/articles'
@@ -88,6 +88,7 @@ export function ArticleForm() {
     try {
       const entry = await createArticle(url)
       setCreated(entry)
+      toast.success('Article saved as Draft.')
     } catch (err) {
       setCreated(null)
       setSubmitError(
@@ -123,16 +124,6 @@ export function ArticleForm() {
           </div>
         </div>
 
-        {USE_MOCKS && (
-          <Alert>
-            <AlertTitle>Prototype data — no backend needed</AlertTitle>
-            <AlertDescription>
-              Saving synthesizes a Draft entry locally. Set VITE_USE_MOCKS=false to POST the URL
-              to the real API and adopt the server-fetched metadata.
-            </AlertDescription>
-          </Alert>
-        )}
-
         <form
           onSubmit={(e) => void onSubmit(e)}
           noValidate
@@ -159,8 +150,7 @@ export function ArticleForm() {
               />
               {!error && (
                 <p className="text-xs text-muted-foreground">
-                  URL input only — no title or body to fill in. The entry is saved as a Draft;
-                  publish it from the list once the metadata looks right.
+                  Saved as a Draft — publish it from the list once ready.
                 </p>
               )}
               {error && (
@@ -188,14 +178,8 @@ export function ArticleForm() {
               <Alert>
                 <AlertTitle>Saved as Draft</AlertTitle>
                 <AlertDescription>
-                  <span className="mb-1 block break-all">
+                  <span className="mb-3 block break-all">
                     “{created.title}” ({created.url})
-                  </span>
-                  <span className="mb-3 block text-xs">
-                    {USE_MOCKS
-                      ? 'Mock entry — resets on reload. The backend will fill in real metadata when wired.'
-                      : 'Saved with server-fetched metadata.'}{' '}
-                    Publishing and deletion land in tasks 12.4–12.5.
                   </span>
                   <span className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" type="button" onClick={() => void navigate('/articles')}>

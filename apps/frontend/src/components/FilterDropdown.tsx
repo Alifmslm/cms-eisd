@@ -58,7 +58,8 @@ export function FilterDropdown<T extends string>({
         <div
           role="listbox"
           aria-label={label}
-          className={`absolute z-30 mt-1 min-w-36 rounded-lg border border-border bg-white p-1 shadow-lg ${
+          style={{ transformOrigin: align === 'right' ? 'top right' : 'top left' }}
+          className={`menu-enter absolute z-30 mt-1 min-w-36 rounded-lg border border-border bg-white p-1 shadow-lg ${
             direction === 'up' ? 'bottom-full mb-1' : 'top-full'
           } ${align === 'right' ? 'right-0' : 'left-0'}`}
         >
