@@ -210,7 +210,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
           <Alert>
             <AlertTitle>Event not found</AlertTitle>
             <AlertDescription>
-              <span className="mb-3 block">No fixture with id “{id}” exists in prototype data.</span>
+              <span className="mb-3 block">No event with this id exists.</span>
               <Link to="/events" className="text-sm font-medium underline underline-offset-4">
                 Back to events
               </Link>
@@ -432,7 +432,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                     hint="listing/card image"
                     invalid={!!errors.coverImage}
                   />,
-                  'Must be 16:9 — other shapes are rejected before upload. Progress is mocked in this prototype; real R2 upload lands with the backend.',
+                  'Must be 16:9 — other shapes are rejected before upload.',
                 )}
                 {field(
                   'headerImage',
@@ -464,8 +464,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                       {fromDatetimeLocal(form.endDate)}
                       {submitted.galleryCount > 0
                         ? ` with ${submitted.galleryCount} galler${submitted.galleryCount === 1 ? 'y image' : 'y images'}.`
-                        : ' with no gallery images.'}{' '}
-                      Connect the backend to persist (tasks 11.6+).
+                        : ' with no gallery images.'}
                     </AlertDescription>
                   </Alert>
                 )}

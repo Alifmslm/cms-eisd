@@ -164,7 +164,7 @@ export function Events() {
     const title = pendingDelete.title
     setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id))
     setPendingDelete(null)
-    setDeletedNotice(`“${title}” was deleted (mock — resets on reload).`)
+    setDeletedNotice(`“${title}” was deleted.`)
   }
 
   useEffect(() => {
