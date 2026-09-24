@@ -19,6 +19,15 @@ import { IconTile } from '@/components/reui/icon-tile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { FilterDropdown } from '@/components/FilterDropdown'
 import { useAuth } from '@/context/useAuth'
 import {
@@ -35,6 +44,8 @@ type PublishFilter = 'All' | 'Published' | 'Draft'
 
 const STATUS_FILTERS: StatusFilter[] = ['All', 'Incoming', 'On Going', 'Finished']
 const PUBLISH_FILTERS: PublishFilter[] = ['All', 'Published', 'Draft']
+
+const PAGE_SIZE = 5
 
 function Sidebar() {
   const { signOut } = useAuth()
@@ -102,6 +113,7 @@ export function Events() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
   const [publishFilter, setPublishFilter] = useState<PublishFilter>('All')
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(0)
   // 11.7 prototype: deletion is confirmed then applied in memory only.
   const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null)
   const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
@@ -152,7 +164,7 @@ export function Events() {
     const title = pendingDelete.title
     setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id))
     setPendingDelete(null)
-    setDeletedNotice(`“${title}” was deleted (mock — resets on reload).`)
+    setDeletedNotice(`“${title}” was deleted.`)
   }
 
   useEffect(() => {
@@ -197,6 +209,29 @@ export function Events() {
         )
       })
   }, [events, statusFilter, publishFilter, query])
+
+  // Reset to the first page whenever the visible set changes.
+  useEffect(() => {
+    setPage(0)
+  }, [statusFilter, publishFilter, query])
+
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, pages - 1)
+  const items = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
+  const onPage = (p: number) => setPage(Math.min(Math.max(0, p), pages - 1))
+  const stopNav = (e: React.MouseEvent, p: number) => {
+    e.preventDefault()
+    onPage(p)
+  }
+
+  // Numbered links: all pages when few, windowed with ellipsis when many.
+  const pageSlots: (number | 'gap')[] =
+    pages <= 5
+      ? Array.from({ length: pages }, (_, i) => i)
+      : [0, safePage - 1, safePage, safePage + 1, pages - 1]
+          .filter((n, i, a) => n >= 0 && n < pages && a.indexOf(n) === i)
+          .sort((a, b) => (a as number) - (b as number))
+          .flatMap((n, i, a) => (i > 0 && (n as number) - (a[i - 1] as number) > 1 ? (['gap', n] as (number | 'gap')[]) : [n]))
 
   // FLIP playback: after the order changes, glide each surviving row from
   // its captured position to its new one. Transform-only (GPU), WAAPI so a
@@ -309,7 +344,8 @@ export function Events() {
                 </Alert>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="overflow-x-auto overflow-y-clip">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -320,8 +356,8 @@ export function Events() {
                       <th className="w-44 pb-2" />
                     </tr>
                   </thead>
-                  <tbody>
-                    {filtered.map((e) => {
+                  <tbody key={safePage}>
+                    {items.map((e, i) => {
                       const status = getEventStatus(e)
                       return (
                         <tr
@@ -330,7 +366,8 @@ export function Events() {
                             if (el) rowRefs.current.set(e.id, el)
                             else rowRefs.current.delete(e.id)
                           }}
-                          className="border-t border-border align-middle even:bg-[#F7F9FF]"
+                          style={{ animationDelay: `${i * 40}ms` }}
+                          className="page-row-enter border-t border-border align-middle even:bg-[#F7F9FF]"
                         >
                           <td className="max-w-72 py-3 pr-3 pl-2">
                             <div className="flex min-w-0 flex-col">
@@ -418,6 +455,51 @@ export function Events() {
                   </tbody>
                 </table>
               </div>
+              {/* c-pagination-3 composition: Previous | numbers | Next, space-between, purple active */}
+              <div className="border-t border-border pt-3">
+                <Pagination className="w-full justify-end">
+                  <PaginationContent className="justify-end gap-2">
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => stopNav(e, safePage - 1)}
+                        aria-disabled={safePage === 0}
+                        className={safePage === 0 ? 'pointer-events-none opacity-40' : ''}
+                      />
+                    </PaginationItem>
+                    <PaginationItem className="flex items-center gap-1">
+                      {pageSlots.map((slot, i) =>
+                        slot === 'gap' ? (
+                          <PaginationEllipsis key={`gap-${i}`} />
+                        ) : (
+                          <PaginationLink
+                            key={slot}
+                            href="#"
+                            isActive={slot === safePage}
+                            onClick={(e) => stopNav(e, slot)}
+                            className={
+                              slot === safePage
+                                ? 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground'
+                                : 'hover:border-border hover:border!'
+                            }
+                          >
+                            {slot + 1}
+                          </PaginationLink>
+                        ),
+                      )}
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => stopNav(e, safePage + 1)}
+                        aria-disabled={safePage === pages - 1}
+                        className={safePage === pages - 1 ? 'pointer-events-none opacity-40' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+              </>
             )}
           </div>
         </section>

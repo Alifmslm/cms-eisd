@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Calendar,
+  Check,
   FlaskConical,
   LayoutDashboard,
   LogOut,
@@ -53,6 +54,11 @@ interface FormState {
 type Errors = Partial<Record<'title' | 'slug' | 'previewDescription' | 'content' | 'location' | 'startDate' | 'endDate' | 'coverImage' | 'headerImage', string>>
 
 function validate(f: FormState, selfId: string | null): Errors {
+  return { ...validateDetails(f, selfId), ...validateImages(f) }
+}
+
+// Step 1 (details): everything from title through full description.
+function validateDetails(f: FormState, selfId: string | null): Errors {
   const e: Errors = {}
   if (!f.title.trim()) e.title = 'Title is required.'
   if (!f.slug.trim()) e.slug = 'Slug is required.'
@@ -67,6 +73,12 @@ function validate(f: FormState, selfId: string | null): Errors {
   if (!f.endDate) e.endDate = 'End date is required.'
   if (f.startDate && f.endDate && new Date(f.endDate) < new Date(f.startDate))
     e.endDate = 'End date must be the same as or after the start date.'
+  return e
+}
+
+// Step 2 (images): cover + header required, gallery optional.
+function validateImages(f: FormState): Errors {
+  const e: Errors = {}
   if (!f.coverImage.trim()) e.coverImage = 'Cover image is required — pick a file or paste a URL.'
   if (!f.headerImage.trim()) e.headerImage = 'Header image is required — pick a file or paste a URL.'
   return e
@@ -159,7 +171,18 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
         },
   )
   const [errors, setErrors] = useState<Errors>({})
+  // Sticky-bar elevation: show a shadow once the form scrolls underneath.
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   const [submitted, setSubmitted] = useState<null | { slug: string; title: string; galleryCount: number }>(null)
+  // Two-section flow: 0 = details (title → full description), 1 = images.
+  // All section state lives in this component, so going Back never loses input.
+  const [step, setStep] = useState<0 | 1>(0)
   // 11.3: image pickers mirror their preview URL into form.coverImage/headerImage.
   const [cover, setCover] = useState<UploadedImage | null>(() =>
     mode === 'edit' && existing?.coverImage
@@ -187,7 +210,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
           <Alert>
             <AlertTitle>Event not found</AlertTitle>
             <AlertDescription>
-              <span className="mb-3 block">No fixture with id “{id}” exists in prototype data.</span>
+              <span className="mb-3 block">No event with this id exists.</span>
               <Link to="/events" className="text-sm font-medium underline underline-offset-4">
                 Back to events
               </Link>
@@ -205,9 +228,23 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
       return next
     })
 
+  const selfId = mode === 'edit' ? (existing?.id ?? null) : null
+
+  const goNext = () => {
+    const errs = validateDetails(form, selfId)
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) return
+    setStep(1)
+  }
+
+  const goBack = () => {
+    setSubmitted(null)
+    setStep(0)
+  }
+
   const onSubmit = (ev: React.FormEvent) => {
     ev.preventDefault()
-    const errs = validate(form, mode === 'edit' ? (existing?.id ?? null) : null)
+    const errs = validate(form, selfId)
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
     // Prototype: no backend — show what WOULD be saved.
@@ -238,18 +275,49 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
     <div className="flex min-h-screen bg-white text-foreground">
       <Sidebar />
       <main className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon-sm" onClick={() => void navigate('/events')} title="Back to events">
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold">{mode === 'create' ? 'New event' : 'Edit event'}</h1>
-            <p className="text-sm text-muted-foreground">
-              {mode === 'create'
-                ? 'Prototype form — saving shows a preview, nothing is sent (no backend).'
-                : `Editing “${existing?.title}” — edits to a Published event would go live immediately.`}
-            </p>
+        {/* Sticky header: back-to-events + title + step state stay visible on scroll. */}
+        <div
+          className={`sticky top-0 z-20 -mx-6 flex flex-col gap-3 border-b border-border bg-white/95 px-6 py-3 backdrop-blur transition-shadow ${
+            scrolled ? 'shadow-[0_12px_16px_-12px_#e5e5e5]' : 'shadow-none'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon-sm" onClick={() => void navigate('/events')} title="Back to events">
+              <ArrowLeft className="size-4" />
+            </Button>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-semibold">{mode === 'create' ? 'New event' : 'Edit event'}</h1>
+              <p className="text-sm text-muted-foreground">
+                {mode === 'create'
+                  ? 'Fill in the event details first, then add images.'
+                  : `Editing “${existing?.title}” — edits to a Published event would go live immediately.`}
+              </p>
+            </div>
           </div>
+
+          {/* Section stepper: details → images. Back never drops entered state. */}
+          {/* pl-10 lines the stepper up with the title text (back button + gap). */}
+          <ol className="flex items-center gap-2 pl-10" aria-label="Form progress">
+            {['Event details', 'Images'].map((label, i) => {
+              const done = step > i
+              const active = step === i
+              return (
+                <li key={label} className="flex items-center gap-2">
+                  {i > 0 && <span className="h-px w-8 bg-border" aria-hidden />}
+                  <span
+                    className={`grid size-6 place-items-center rounded-full text-[11px] font-semibold ${
+                      done || active ? 'bg-success text-white' : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {done ? <Check className="size-3.5" /> : i + 1}
+                  </span>
+                  <span className={`text-xs font-medium ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {label}
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
         </div>
 
         <form
@@ -258,159 +326,159 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
           className="flex flex-col gap-5 rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1"
         >
           <div className="flex flex-col gap-5 rounded-lg border border-[#EBEBEB] bg-white p-5">
-            {field(
-              'title',
-              'Title',
-              <Input
-                id="evt-title"
-                className={inputCls}
-                value={form.title}
-                onChange={(e) => set('title', e.target.value)}
-                placeholder="e.g. Annual Meeting 2026"
-                aria-invalid={!!errors.title}
-              />,
-            )}
-            {field(
-              'slug',
-              'Slug',
-              <Input
-                id="evt-slug"
-                className={inputCls}
-                value={form.slug}
-                onChange={(e) => {
-                  set('slugTouched', true)
-                  set('slug', e.target.value)
-                }}
-                placeholder="auto-generated from title"
-                aria-invalid={!!errors.slug}
-              />,
-              'Auto-generated from the title until you edit it by hand. Must stay unique.',
-            )}
-            <div className="grid gap-5 sm:grid-cols-2">
-              {field(
-                'startDate',
-                'Start date',
-                <Input
-                  id="evt-startDate"
-                  type="datetime-local"
-                  className={inputCls}
-                  value={form.startDate}
-                  onChange={(e) => set('startDate', e.target.value)}
-                  aria-invalid={!!errors.startDate}
-                />,
-              )}
-              {field(
-                'endDate',
-                'End date',
-                <Input
-                  id="evt-endDate"
-                  type="datetime-local"
-                  className={inputCls}
-                  value={form.endDate}
-                  onChange={(e) => set('endDate', e.target.value)}
-                  aria-invalid={!!errors.endDate}
-                />,
-                'Must be the same as or after the start date.',
-              )}
-            </div>
-            {field(
-              'location',
-              'Location',
-              <Input
-                id="evt-location"
-                className={inputCls}
-                value={form.location}
-                onChange={(e) => set('location', e.target.value)}
-                placeholder="e.g. Aula Utama, Gedung EISD"
-                aria-invalid={!!errors.location}
-              />,
-            )}
-            {field(
-              'previewDescription',
-              'Preview description',
-              <textarea
-                id="evt-previewDescription"
-                className={textareaCls}
-                value={form.previewDescription}
-                onChange={(e) => set('previewDescription', e.target.value)}
-                placeholder="Short text for listing cards (1–2 sentences)"
-                rows={2}
-                aria-invalid={!!errors.previewDescription}
-              />,
-              'Shown on listing cards.',
-            )}
-            {field(
-              'content',
-              'Full description',
-              <textarea
-                id="evt-content"
-                className={textareaCls}
-                value={form.content}
-                onChange={(e) => set('content', e.target.value)}
-                placeholder="Detail page body (markdown supported later)"
-                rows={6}
-                aria-invalid={!!errors.content}
-              />,
-            )}
-            {field(
-              'coverImage',
-              'Cover image',
-              <ImageUpload
-                id="evt-coverImage"
-                value={cover}
-                onChange={syncCover}
-                aspectRatio={{ w: 16, h: 9 }}
-                hint="listing/card image"
-                invalid={!!errors.coverImage}
-              />,
-              'Must be 16:9 — other shapes are rejected before upload. Progress is mocked in this prototype; real R2 upload lands with the backend.',
-            )}
-            {field(
-              'headerImage',
-              'Header image',
-              <ImageUpload
-                id="evt-headerImage"
-                value={header}
-                onChange={syncHeader}
-                invalid={!!errors.headerImage}
-              />,
-              'Detail page banner.',
-            )}
+            {step === 0 ? (
+              <>
+                {field(
+                  'title',
+                  'Title',
+                  <Input
+                    id="evt-title"
+                    className={inputCls}
+                    value={form.title}
+                    onChange={(e) => set('title', e.target.value)}
+                    placeholder="e.g. Annual Meeting 2026"
+                    aria-invalid={!!errors.title}
+                  />,
+                )}
+                {/* Slug is auto-generated from the title and kept headless (no manual input). */}
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {field(
+                    'startDate',
+                    'Start date',
+                    <Input
+                      id="evt-startDate"
+                      type="datetime-local"
+                      className={inputCls}
+                      value={form.startDate}
+                      onChange={(e) => set('startDate', e.target.value)}
+                      aria-invalid={!!errors.startDate}
+                    />,
+                  )}
+                  {field(
+                    'endDate',
+                    'End date',
+                    <Input
+                      id="evt-endDate"
+                      type="datetime-local"
+                      className={inputCls}
+                      value={form.endDate}
+                      onChange={(e) => set('endDate', e.target.value)}
+                      aria-invalid={!!errors.endDate}
+                    />,
+                    'Must be the same as or after the start date.',
+                  )}
+                </div>
+                {field(
+                  'location',
+                  'Location',
+                  <Input
+                    id="evt-location"
+                    className={inputCls}
+                    value={form.location}
+                    onChange={(e) => set('location', e.target.value)}
+                    placeholder="e.g. Aula Utama, Gedung EISD"
+                    aria-invalid={!!errors.location}
+                  />,
+                )}
+                {field(
+                  'previewDescription',
+                  'Preview description',
+                  <textarea
+                    id="evt-previewDescription"
+                    className={textareaCls}
+                    value={form.previewDescription}
+                    onChange={(e) => set('previewDescription', e.target.value)}
+                    placeholder="Short text for listing cards (1–2 sentences)"
+                    rows={2}
+                    aria-invalid={!!errors.previewDescription}
+                  />,
+                  'Shown on listing cards.',
+                )}
+                {field(
+                  'content',
+                  'Full description',
+                  <textarea
+                    id="evt-content"
+                    className={textareaCls}
+                    value={form.content}
+                    onChange={(e) => set('content', e.target.value)}
+                    placeholder="Detail page body (markdown supported later)"
+                    rows={6}
+                    aria-invalid={!!errors.content}
+                  />,
+                )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label>
-                Gallery images <span className="font-normal text-muted-foreground">(optional, max 4)</span>
-              </Label>
-              <GalleryUpload value={gallery} onChange={setGallery} />
-              <p className="text-xs text-muted-foreground">
-                V1 caps the gallery at 4 — the list is array-shaped so V2 can raise the limit without a schema change.
-              </p>
-            </div>
+                <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+                  <Link to="/events">
+                    <Button variant="outline" type="button">
+                      Cancel
+                    </Button>
+                  </Link>
+                  <Button type="button" className="text-white" onClick={goNext}>
+                    Next
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {field(
+                  'coverImage',
+                  'Cover image',
+                  <ImageUpload
+                    id="evt-coverImage"
+                    value={cover}
+                    onChange={syncCover}
+                    aspectRatio={{ w: 16, h: 9 }}
+                    hint="listing/card image"
+                    invalid={!!errors.coverImage}
+                  />,
+                  'Must be 16:9 — other shapes are rejected before upload.',
+                )}
+                {field(
+                  'headerImage',
+                  'Header image',
+                  <ImageUpload
+                    id="evt-headerImage"
+                    value={header}
+                    onChange={syncHeader}
+                    invalid={!!errors.headerImage}
+                  />,
+                  'Detail page banner.',
+                )}
 
-            {submitted && (
-              <Alert>
-                <AlertTitle>{mode === 'create' ? 'Looks good — would save as Draft' : 'Looks good — would save edits'}</AlertTitle>
-                <AlertDescription>
-                  “{submitted.title}” (/{submitted.slug}) passed validation against {fromDatetimeLocal(form.startDate)} →{' '}
-                  {fromDatetimeLocal(form.endDate)}
-                  {submitted.galleryCount > 0
-                    ? ` with ${submitted.galleryCount} galler${submitted.galleryCount === 1 ? 'y image' : 'y images'}.`
-                    : ' with no gallery images.'}{' '}
-                  Connect the backend to persist (tasks 11.6+).
-                </AlertDescription>
-              </Alert>
+                <div className="flex flex-col gap-1.5">
+                  <Label>
+                    Gallery images <span className="font-normal text-muted-foreground">(optional, max 4)</span>
+                  </Label>
+                  <GalleryUpload value={gallery} onChange={setGallery} />
+                  <p className="text-xs text-muted-foreground">
+                    V1 caps the gallery at 4 — the list is array-shaped so V2 can raise the limit without a schema change.
+                  </p>
+                </div>
+
+                {submitted && (
+                  <Alert>
+                    <AlertTitle>{mode === 'create' ? 'Looks good — would save as Draft' : 'Looks good — would save edits'}</AlertTitle>
+                    <AlertDescription>
+                      “{submitted.title}” (/{submitted.slug}) passed validation against {fromDatetimeLocal(form.startDate)} →{' '}
+                      {fromDatetimeLocal(form.endDate)}
+                      {submitted.galleryCount > 0
+                        ? ` with ${submitted.galleryCount} galler${submitted.galleryCount === 1 ? 'y image' : 'y images'}.`
+                        : ' with no gallery images.'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex items-center justify-between gap-2 border-t border-border pt-4">
+                  <Button variant="outline" type="button" onClick={goBack}>
+                    Back to details
+                  </Button>
+                  <Button type="submit" className="text-white">
+                    {mode === 'create' ? 'Save as Draft' : 'Save changes'}
+                  </Button>
+                </div>
+              </>
             )}
-
-            <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-              <Link to="/events">
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
-              </Link>
-              <Button type="submit" className="text-white">
-                {mode === 'create' ? 'Save as Draft' : 'Save changes'}
-              </Button>
-            </div>
           </div>
         </form>
       </main>

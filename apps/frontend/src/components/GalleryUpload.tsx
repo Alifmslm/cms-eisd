@@ -46,6 +46,9 @@ export function GalleryUpload({ value, onChange, maxItems = 4, maxSizeMB = 5 }: 
   const [progress, setProgress] = useState<Record<string, number>>({})
   const [notice, setNotice] = useState<{ kind: 'error' | 'info'; text: string } | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  // Thumbnail drag-reorder state (distinct from file-drop above).
+  const [dragKey, setDragKey] = useState<string | null>(null)
+  const [dropKey, setDropKey] = useState<string | null>(null)
 
   // Source of truth lives in the parent (`value`); timers/URLs cleaned on unmount.
   useEffect(
@@ -156,6 +159,20 @@ export function GalleryUpload({ value, onChange, maxItems = 4, maxSizeMB = 5 }: 
     emit(next)
   }
 
+  // Drag-to-reorder: drop the dragged thumb onto another to take its slot.
+  const reorder = (fromKey: string, toKey: string) => {
+    if (fromKey === toKey) return
+    const from = value.findIndex((img) => img.key === fromKey)
+    const to = value.findIndex((img) => img.key === toKey)
+    if (from < 0 || to < 0) return
+    const next = [...value]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    emit(next)
+  }
+
+  const isFileDrag = (e: React.DragEvent) => Array.from(e.dataTransfer.types).includes('Files')
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -175,11 +192,13 @@ export function GalleryUpload({ value, onChange, maxItems = 4, maxSizeMB = 5 }: 
       />
       <div
         onDragOver={(e) => {
+          if (!isFileDrag(e)) return
           e.preventDefault()
           if (!full) setDragOver(true)
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => {
+          if (!isFileDrag(e)) return
           e.preventDefault()
           setDragOver(false)
           addFiles(e.dataTransfer.files)
@@ -195,7 +214,38 @@ export function GalleryUpload({ value, onChange, maxItems = 4, maxSizeMB = 5 }: 
           return (
             <div
               key={img.key}
-              className="group relative overflow-hidden rounded-md border border-border bg-background"
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/plain', img.key)
+                e.dataTransfer.effectAllowed = 'move'
+                setDragKey(img.key)
+              }}
+              onDragEnd={() => {
+                setDragKey(null)
+                setDropKey(null)
+              }}
+              onDragOver={(e) => {
+                if (isFileDrag(e) || dragKey === null || dragKey === img.key) return
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                setDropKey(img.key)
+              }}
+              onDragLeave={() => {
+                setDropKey((k) => (k === img.key ? null : k))
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (dragKey) reorder(dragKey, img.key)
+                setDragKey(null)
+                setDropKey(null)
+              }}
+              title="Drag to reorder"
+              className={cn(
+                'group relative cursor-grab overflow-hidden rounded-md border border-border bg-background active:cursor-grabbing',
+                dragKey === img.key && 'opacity-40',
+                dropKey === img.key && 'ring-2 ring-secondary ring-offset-1',
+              )}
             >
               <div className="aspect-square w-full bg-muted/40">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
