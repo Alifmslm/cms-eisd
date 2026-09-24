@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   Calendar,
@@ -87,6 +88,7 @@ export function ArticleForm() {
     try {
       const entry = await createArticle(url)
       setCreated(entry)
+      toast.success('Article saved as Draft.')
     } catch (err) {
       setCreated(null)
       setSubmitError(

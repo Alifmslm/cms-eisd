@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   Calendar,
   Check,
@@ -99,7 +100,6 @@ export function Articles() {
   const [pendingDelete, setPendingDelete] = useState<AdminArticle | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const copyLink = async (id: string, url: string) => {
@@ -173,7 +173,7 @@ export function Articles() {
       await deleteArticle(pendingDelete.id)
       setArticles((prev) => prev.filter((a) => a.id !== pendingDelete.id))
       setPendingDelete(null)
-      setDeletedNotice(`“${title}” was deleted.`)
+      toast.success(`“${title}” was deleted.`)
     } catch {
       setDeleteError('The server refused the deletion — the article may already be gone. Try reloading the list.')
     } finally {
@@ -270,18 +270,6 @@ export function Articles() {
             ))}
           </div>
         </section>
-
-        {deletedNotice && (
-          <Alert>
-            <AlertTitle>Deleted</AlertTitle>
-            <AlertDescription>
-              <span className="mb-3 block">{deletedNotice}</span>
-              <Button variant="outline" size="sm" onClick={() => setDeletedNotice(null)}>
-                Dismiss
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
@@ -425,11 +413,10 @@ export function Articles() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                setDeletedNotice(null)
-                                setDeleteError(null)
-                                setPendingDelete(a)
-                              }}
+                                onClick={() => {
+                                  setDeleteError(null)
+                                  setPendingDelete(a)
+                                }}
                               title={`Delete “${a.title}” permanently`}
                               aria-label={`Delete ${a.title}`}
                               className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"

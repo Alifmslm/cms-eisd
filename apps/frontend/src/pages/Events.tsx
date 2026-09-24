@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   Calendar,
   Eye,
@@ -116,7 +117,6 @@ export function Events() {
   const [page, setPage] = useState(0)
   // 11.7 prototype: deletion is confirmed then applied in memory only.
   const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null)
-  const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -161,7 +161,7 @@ export function Events() {
     const title = pendingDelete.title
     setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id))
     setPendingDelete(null)
-    setDeletedNotice(`“${title}” was deleted.`)
+    toast.success(`“${title}” was deleted.`)
   }
 
   useEffect(() => {
@@ -293,18 +293,6 @@ export function Events() {
             ))}
           </div>
         </section>
-
-        {deletedNotice && (
-          <Alert>
-            <AlertTitle>Deleted</AlertTitle>
-            <AlertDescription>
-              <span className="mb-3 block">{deletedNotice}</span>
-              <Button variant="outline" size="sm" onClick={() => setDeletedNotice(null)}>
-                Dismiss
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
@@ -443,10 +431,7 @@ export function Events() {
                               </Link>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setDeletedNotice(null)
-                                  setPendingDelete(e)
-                                }}
+                                onClick={() => setPendingDelete(e)}
                                 title={`Delete “${e.title}” permanently`}
                                 aria-label={`Delete ${e.title}`}
                                 className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"

@@ -94,4 +94,11 @@ Core dashboard components — ReUI defaults apply unless noted:
 - **Cards, Badges, Tabs, Dialog/Modal, Toast:** ReUI defaults
 - **Sidebar Nav:** ReUI sidebar pattern; active item styled with `--color-secondary`
 
+### Info toast (ReUI Sonner) — the single success channel
+- **Library:** ReUI Sonner (`sonner` package, one `<Toaster>` in `App.tsx`). Do not invent inline success banners per page.
+- **Position:** bottom-right, always. Auto-dismiss (~4s); no action buttons on success toasts.
+- **Styling:** card surface (`--color-card`), **accent border** (`--color-accent`), default shadow; **colored status icons** — success green, error red, warning amber, info secondary (see `index.css` toast block).
+- **When to fire:** creation, update, and deletion success (events, articles). Copy: one short sentence (`“X” was deleted.`, `Event created as Draft.`).
+- **When NOT to fire:** publish toggles (badge flip + row glide already communicate), validation errors (inline field errors), loading states. Errors that block the user stay inline near the control.
+
 For any component, state, or pattern not covered above, default to ReUI's (shadcn/ui) standard implementation.

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Login } from './pages/Login'
@@ -12,6 +13,8 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        {/* Info toast host: bottom-right, accent border + colored icons (see index.css). */}
+        <Toaster position="bottom-right" />
         <Routes>
           <Route path="/" element={<div>Home</div>} />
           <Route path="/login" element={<Login />} />

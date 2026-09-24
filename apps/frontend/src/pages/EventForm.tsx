@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   Calendar,
@@ -249,6 +250,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
     if (Object.keys(errs).length > 0) return
     // Prototype: no backend — show what WOULD be saved.
     setSubmitted({ slug: form.slug.trim(), title: form.title.trim(), galleryCount: gallery.length })
+    toast.success(mode === 'create' ? 'Event created as Draft.' : 'Event updated.')
   }
 
   const field = (
