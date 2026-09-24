@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
+  Eye,
+  FileText,
   FlaskConical,
   ImageIcon,
   LayoutDashboard,
@@ -11,6 +13,7 @@ import {
   Search,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
+import { IconTile } from '@/components/reui/icon-tile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +23,6 @@ import {
   fetchAdminArticles,
   formatLong,
   toggleArticlePublish,
-  USE_MOCKS,
   type AdminArticle,
 } from '@/lib/articles'
 
@@ -109,10 +111,15 @@ export function Articles() {
     }
   }, [])
 
-  const counts = useMemo(() => {
+  // Dashboard-style stat cards, same as the events header.
+  const stats = useMemo(() => {
     let published = 0
     for (const a of articles) if (a.publishedAt !== null) published += 1
-    return { total: articles.length, published, draft: articles.length - published }
+    return [
+      { label: 'Total articles', value: articles.length, icon: Newspaper, tileClassName: 'bg-rose-500 text-white' },
+      { label: 'Live', value: published, icon: Eye, tileClassName: 'bg-emerald-500 text-white' },
+      { label: 'Drafts', value: articles.length - published, icon: FileText, tileClassName: 'bg-cyan-600 text-white' },
+    ]
   }, [articles])
 
   // 12.4: adopt the server timestamp when live, optimistic flip in prototype.
@@ -139,7 +146,7 @@ export function Articles() {
       await deleteArticle(pendingDelete.id)
       setArticles((prev) => prev.filter((a) => a.id !== pendingDelete.id))
       setPendingDelete(null)
-      setDeletedNotice(`“${title}” was deleted${USE_MOCKS ? ' (mock — resets on reload)' : ''}.`)
+      setDeletedNotice(`“${title}” was deleted.`)
     } catch {
       setDeleteError('The server refused the deletion — the article may already be gone. Try reloading the list.')
     } finally {
@@ -177,9 +184,7 @@ export function Articles() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">Articles</h1>
-            <p className="text-sm text-muted-foreground">
-              {counts.total} total · {counts.published} published · {counts.draft} draft
-            </p>
+            <p className="text-sm text-muted-foreground">Medium links and publish states</p>
           </div>
           <Link to="/articles/new">
             <Button className="text-white">
@@ -188,15 +193,24 @@ export function Articles() {
           </Link>
         </div>
 
-        {USE_MOCKS && (
-          <Alert>
-            <AlertTitle>Prototype data — no backend needed</AlertTitle>
-            <AlertDescription>
-              Showing 5 fixtures covering Draft / Published. Publish toggles and deletions
-              apply in memory only (reset on reload). Set VITE_USE_MOCKS=false to hit the real API.
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Stat cards in #F7F9FF wrapper — same style as the events header. */}
+        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+          <div className="grid grid-cols-3 gap-1">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">{s.label}</p>
+                  <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end justify-start">
+                  <IconTile size="sm" variant="solid" className={s.tileClassName}>
+                    <s.icon className="size-4" />
+                  </IconTile>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {deletedNotice && (
           <Alert>
