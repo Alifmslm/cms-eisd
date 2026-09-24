@@ -1,6 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Stack+Sans+Text:wght@200..700&display=swap');
 @import "tailwindcss";
 
+/* Paginated table rows: staggered enter so page changes cascade instead of popping. */
+@keyframes row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-row-enter {
+  animation: row-enter 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-row-enter {
+    animation: none;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* EISD Laboratory CMS tokens (design_system.md):
