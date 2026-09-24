@@ -2,21 +2,25 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
+  Check,
+  Copy,
   Eye,
   FileText,
   FlaskConical,
-  ImageIcon,
   LayoutDashboard,
+  Link2,
   LogOut,
   Newspaper,
   Plus,
   Search,
+  Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { useAuth } from '@/context/useAuth'
 import {
   deleteArticle,
@@ -96,6 +100,23 @@ export function Articles() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deletedNotice, setDeletedNotice] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const copyLink = async (id: string, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      // Clipboard API unavailable (permissions/insecure context) — legacy fallback.
+      const ta = document.createElement('textarea')
+      ta.value = url
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      ta.remove()
+    }
+    setCopiedId(id)
+    window.setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500)
+  }
 
   useEffect(() => {
     let live = true
@@ -225,35 +246,26 @@ export function Articles() {
         )}
 
         <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
-          <div className="flex flex-col gap-1 rounded-lg border border-[#EBEBEB] bg-white p-5">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-2 rounded-lg bg-white py-2">
               <div className="relative mr-auto w-full max-w-64">
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search title, description, URL…"
+                  aria-label="Search articles"
                   className="pl-8"
                 />
               </div>
-              <div className="flex gap-1.5" role="tablist" aria-label="Filter by publish state">
-                {PUBLISH_FILTERS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    role="tab"
-                    aria-selected={publishFilter === p}
-                    onClick={() => setPublishFilter(p)}
-                    className={`h-7 rounded-full border px-3 text-xs font-medium transition-colors ${
-                      publishFilter === p
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Publish"
+                value={publishFilter}
+                options={PUBLISH_FILTERS}
+                onPick={setPublishFilter}
+                align="right"
+              />
             </div>
 
             {loading ? (
@@ -270,7 +282,7 @@ export function Articles() {
                 </Alert>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-clip">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -287,29 +299,35 @@ export function Articles() {
                         className="border-t border-border align-middle even:bg-[#F7F9FF]"
                       >
                         <td className="max-w-96 py-3 pr-3 pl-2">
-                          <div className="flex items-center gap-3">
-                            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted text-muted-foreground">
-                              {a.coverImage ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={a.coverImage} alt="" className="size-full object-cover" />
-                              ) : (
-                                <ImageIcon className="size-4" />
-                              )}
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium">{a.title}</span>
-                              <span className="block truncate text-xs text-muted-foreground">
-                                {a.description}
-                              </span>
+                          <div className="flex min-w-0 flex-col">
+                            <span className="block truncate font-medium">{a.title}</span>
+                            <span className="flex items-center gap-1 truncate text-xs">
+                              <Link2 className="size-3 shrink-0 text-muted-foreground" />
                               <a
                                 href={a.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="block truncate text-xs text-secondary underline-offset-4 hover:underline"
+                                className="truncate text-secondary underline-offset-4 hover:underline"
                               >
-                                {a.url}
+                                article link
                               </a>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  void copyLink(a.id, a.url)
+                                }}
+                                title="Copy article link"
+                                aria-label={`Copy link of ${a.title}`}
+                                className="grid size-5 shrink-0 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+                              >
+                                {copiedId === a.id ? (
+                                  <Check className="size-3 text-success-foreground" />
+                                ) : (
+                                  <Copy className="size-3" />
+                                )}
+                              </button>
                             </span>
                           </div>
                         </td>
@@ -323,6 +341,8 @@ export function Articles() {
                           <span className="inline-flex items-center gap-3">
                             <button
                               type="button"
+                              role="switch"
+                              aria-checked={a.publishedAt !== null}
                               onClick={() => void togglePublish(a.id)}
                               disabled={togglingId === a.id}
                               title={
@@ -333,17 +353,32 @@ export function Articles() {
                               aria-label={
                                 a.publishedAt !== null ? `Unpublish ${a.title}` : `Publish ${a.title}`
                               }
-                              className={
-                                a.publishedAt !== null
-                                  ? 'text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-40'
-                                  : 'text-xs font-medium text-success-foreground underline-offset-4 hover:underline disabled:opacity-40'
-                              }
+                              className="flex items-center gap-2 disabled:opacity-40"
                             >
-                              {togglingId === a.id
-                                ? 'Saving…'
-                                : a.publishedAt !== null
-                                  ? 'Unpublish'
-                                  : 'Publish'}
+                              <span
+                                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                                  a.publishedAt !== null ? 'bg-success' : 'bg-border'
+                                }`}
+                              >
+                                <span
+                                  className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform ${
+                                    a.publishedAt !== null ? 'translate-x-4' : ''
+                                  }`}
+                                />
+                              </span>
+                              <span
+                                className={`text-xs font-medium ${
+                                  a.publishedAt !== null
+                                    ? 'text-success-foreground'
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                {togglingId === a.id
+                                  ? 'Saving…'
+                                  : a.publishedAt !== null
+                                    ? 'Live'
+                                    : 'Draft'}
+                              </span>
                             </button>
                             <button
                               type="button"
@@ -354,9 +389,9 @@ export function Articles() {
                               }}
                               title={`Delete “${a.title}” permanently`}
                               aria-label={`Delete ${a.title}`}
-                              className="text-xs font-medium text-destructive underline-offset-4 hover:underline"
+                              className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                             >
-                              Delete
+                              <Trash2 className="size-3.5" />
                             </button>
                           </span>
                         </td>
