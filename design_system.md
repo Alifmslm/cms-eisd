@@ -38,6 +38,9 @@ This keeps both brand colors visible without either competing for attention agai
 | Error | `#EF4444` |
 | Info | `#494CA0` (reuse secondary) |
 
+### Foreground pairing rule
+- When the background is the green brand (`--color-primary` / `--color-success` `#00D97A`), always use white (`#FFFFFF`) as the foreground. Never put dark text on the green brand background.
+
 ## 3. Typography
 - **Primary:** Stack Sans Text — Google Fonts, variable weight 200–700
 - **Fallback:** Inter, sans-serif
