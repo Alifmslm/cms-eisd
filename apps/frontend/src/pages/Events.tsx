@@ -143,19 +143,16 @@ export function Events() {
     ]
   }, [events])
 
-  // FLIP reorder animation: row elements by id + positions captured before
-  // the toggle, so moved rows glide instead of jumping.
+  // FLIP reorder animation: row elements by id. Positions are compared on
+  // every visible-order change (toggle, filter, search, page), so moved rows
+  // always glide instead of jumping.
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
-  const flipFirst = useRef<Map<string, DOMRect> | null>(null)
+  const prevRects = useRef(new Map<string, DOMRect>())
 
   // 11.6 prototype: optimistic in-memory flip. No backend call yet —
   // POST `:id/publish` / `:id/unpublish` lands with the real API.
-  const togglePublish = (id: string) => {
-    const first = new Map<string, DOMRect>()
-    rowRefs.current.forEach((el, key) => first.set(key, el.getBoundingClientRect()))
-    flipFirst.current = first
+  const togglePublish = (id: string) =>
     setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
-  }
 
   // 11.7 prototype: confirmed deletion, in memory only (DELETE /api/events/:id
   // lands with the real API, including R2 image cleanup per task 6.3).
@@ -233,16 +230,25 @@ export function Events() {
           .sort((a, b) => (a as number) - (b as number))
           .flatMap((n, i, a) => (i > 0 && (n as number) - (a[i - 1] as number) > 1 ? (['gap', n] as (number | 'gap')[]) : [n]))
 
-  // FLIP playback: after the order changes, glide each surviving row from
-  // its captured position to its new one. Transform-only (GPU), WAAPI so a
-  // second toggle mid-flight retargets instead of restarting.
+  // FLIP playback: after the visible order changes (toggle, filter,
+  // search), glide each surviving row from its previous position to its new
+  // one. Page changes are excluded — remounted rows already cascade in via
+  // CSS, so animating them again would double up. Transform-only (GPU),
+  // WAAPI so a second change mid-flight retargets instead of restarting.
+  const prevPage = useRef(safePage)
   useLayoutEffect(() => {
-    const first = flipFirst.current
-    flipFirst.current = null
-    if (!first) return
+    const next = new Map<string, DOMRect>()
+    rowRefs.current.forEach((el, id) => next.set(id, el.getBoundingClientRect()))
+    const prev = prevRects.current
+    prevRects.current = next
+    if (prevPage.current !== safePage) {
+      prevPage.current = safePage
+      return
+    }
+    if (prev.size === 0) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     rowRefs.current.forEach((el, id) => {
-      const f = first.get(id)
+      const f = prev.get(id)
       if (!f) return
       const dy = f.top - el.getBoundingClientRect().top
       if (dy === 0) return
@@ -251,7 +257,7 @@ export function Events() {
         easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
       })
     })
-  }, [filtered])
+  }, [filtered, safePage])
 
   return (
     <div className="flex min-h-screen bg-white text-foreground">

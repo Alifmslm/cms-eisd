@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
@@ -143,6 +143,12 @@ export function Articles() {
     ]
   }, [articles])
 
+  // FLIP reorder animation, same as the events table: row elements by id.
+  // Positions are compared on every visible-order change (toggle, filter,
+  // search), so moved rows always glide instead of jumping.
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
+  const prevRects = useRef(new Map<string, DOMRect>())
+
   // 12.4: adopt the server timestamp when live, optimistic flip in prototype.
   const togglePublish = async (id: string) => {
     const current = articles.find((a) => a.id === id)
@@ -207,6 +213,28 @@ export function Articles() {
         )
       })
   }, [articles, publishFilter, query])
+
+  // FLIP playback: after the visible order changes, glide each surviving
+  // row from its previous position to its new one. Transform-only (GPU),
+  // WAAPI so a second change mid-flight retargets instead of restarting.
+  useLayoutEffect(() => {
+    const prev = prevRects.current
+    const next = new Map<string, DOMRect>()
+    rowRefs.current.forEach((el, id) => next.set(id, el.getBoundingClientRect()))
+    prevRects.current = next
+    if (prev.size === 0) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    rowRefs.current.forEach((el, id) => {
+      const f = prev.get(id)
+      if (!f) return
+      const dy = f.top - el.getBoundingClientRect().top
+      if (dy === 0) return
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], {
+        duration: 260,
+        easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+      })
+    })
+  }, [filtered])
 
   return (
     <div className="flex min-h-screen bg-white text-foreground">
@@ -303,10 +331,15 @@ export function Articles() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((a) => (
+                    {filtered.map((a, i) => (
                       <tr
                         key={a.id}
-                        className="border-t border-border align-middle even:bg-[#F7F9FF]"
+                        ref={(el) => {
+                          if (el) rowRefs.current.set(a.id, el)
+                          else rowRefs.current.delete(a.id)
+                        }}
+                        style={{ animationDelay: `${Math.min(i, 9) * 40}ms` }}
+                        className="page-row-enter border-t border-border align-middle even:bg-[#F7F9FF]"
                       >
                         <td className="max-w-96 py-3 pr-3 pl-2">
                           <div className="flex min-w-0 flex-col">
@@ -417,7 +450,7 @@ export function Articles() {
 
       {pendingDelete && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4"
+          className="overlay-enter fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4"
           onClick={() => {
             if (!deleting) {
               setPendingDelete(null)
@@ -431,7 +464,7 @@ export function Articles() {
             aria-labelledby="delete-article-title"
             aria-describedby="delete-article-desc"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-lg"
+            className="dialog-enter w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-lg"
           >
             <h2 id="delete-article-title" className="text-base font-semibold">
               Delete “{pendingDelete.title}”?
