@@ -270,22 +270,7 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                 aria-invalid={!!errors.title}
               />,
             )}
-            {field(
-              'slug',
-              'Slug',
-              <Input
-                id="evt-slug"
-                className={inputCls}
-                value={form.slug}
-                onChange={(e) => {
-                  set('slugTouched', true)
-                  set('slug', e.target.value)
-                }}
-                placeholder="auto-generated from title"
-                aria-invalid={!!errors.slug}
-              />,
-              'Auto-generated from the title until you edit it by hand. Must stay unique.',
-            )}
+            {/* Slug is auto-generated from the title and kept headless (no manual input). */}
             <div className="grid gap-5 sm:grid-cols-2">
               {field(
                 'startDate',
