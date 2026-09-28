@@ -17,8 +17,45 @@
   animation: row-enter 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
+/* Dashboard redirect entrance: sections rise in with a staggered cascade so
+ * the login → dashboard handoff reads as one surface arriving, not a flash.
+ * transform + opacity only (GPU), strong ease-out, staggered 30–80ms. */
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.section-enter {
+  animation: section-enter 300ms var(--ease-out) both;
+}
+
+/* Stat numbers: rolling digit feel via a short rise + fade while the
+ * count-up runs. The value itself stays tabular-nums so width never shifts. */
+@keyframes stat-number-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-number-in {
+  animation: stat-number-in 300ms var(--ease-out) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .page-row-enter {
+  .page-row-enter,
+  .section-enter,
+  .stat-number-in {
     animation: none;
   }
 }
@@ -81,6 +118,9 @@
    70% neutrals, 20% secondary #494CA0 (structure), 10% primary #00D97A (CTAs).
    Flat surfaces, no gradients. ReUI extended tokens remapped to brand hues. */
 :root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
     --background: #F0F0F0;
     --foreground: #1A1A1A;
     --card: #FFFFFF;

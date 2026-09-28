@@ -1,5 +1,5 @@
 // Latest updates as a column table with zebra striping in the wrapper tint.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
+import { StatNumber } from '@/components/StatNumber'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -222,7 +223,10 @@ function EmptyLatest() {
 
 function UpcomingCard({ upcoming, className = '' }: { upcoming: DashboardEvent[]; className?: string }) {
   return (
-    <div className={`flex flex-col overflow-hidden rounded-lg border border-[#EBEBEB] bg-white ${className}`}>
+    <div
+      style={{ animationDelay: '250ms' }}
+      className={`flex flex-col overflow-hidden rounded-lg border border-[#EBEBEB] bg-white ${className}`}
+    >
       <div className="flex flex-col gap-0.5 px-5 pt-5">
         <h2 className="text-base font-medium">Upcoming events</h2>
         <p className="text-xs text-muted-foreground">Scheduled ahead, sorted by start date</p>
@@ -235,8 +239,12 @@ function UpcomingCard({ upcoming, className = '' }: { upcoming: DashboardEvent[]
           </Alert>
         ) : (
           <ul className="flex flex-col gap-3">
-            {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+            {upcoming.map((e, i) => (
+              <li
+                key={e.id}
+                style={{ animationDelay: `${Math.min(i, 9) * 40}ms` }}
+                className="page-row-enter flex items-center gap-3 border-b border-border pb-3 last:border-0 last:pb-0"
+              >
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p className="truncate text-sm font-medium">{e.title}</p>
                   <p className="text-xs text-muted-foreground">
@@ -256,7 +264,17 @@ function UpcomingCard({ upcoming, className = '' }: { upcoming: DashboardEvent[]
 
 // Classic column table with a header row — Type | Title | Updated | Status | action —
 // zebra-striped with the wrapper tint (#F7F9FF).
-function LatestTable({ items }: { items: FeedItem[] }) {
+// Entrance + pagination cascade matches Articles/Events: remounted rows stagger
+// in via CSS, surviving rows glide via WAAPI FLIP in the parent effect.
+function LatestTable({
+  items,
+  page,
+  registerRow,
+}: {
+  items: FeedItem[]
+  page: number
+  registerRow: (id: string, el: HTMLTableRowElement | null) => void
+}) {
   if (items.length === 0) return <EmptyLatest />
   return (
     <table className="w-full text-sm">
@@ -269,9 +287,14 @@ function LatestTable({ items }: { items: FeedItem[] }) {
           <th className="w-9 pb-2" />
         </tr>
       </thead>
-      <tbody>
-        {items.map((f) => (
-          <tr key={`${f.kind}-${f.id}`} className="border-t border-border even:bg-[#F7F9FF]">
+      <tbody key={page}>
+        {items.map((f, i) => (
+          <tr
+            key={`${f.kind}-${f.id}`}
+            ref={(el) => registerRow(`${f.kind}-${f.id}`, el)}
+            style={{ animationDelay: `${i * 40}ms` }}
+            className="page-row-enter border-t border-border even:bg-[#F7F9FF]"
+          >
             <td className="py-2.5 pr-3 pl-2 rounded-l-md">
               <KindChip kind={f.kind} />
             </td>
@@ -362,6 +385,40 @@ export function Dashboard() {
     onPage(p)
   }
 
+  // FLIP reorder glide, same as Articles/Events: row elements keyed by id.
+  // Page changes are excluded — remounted rows already cascade in via CSS,
+  // so animating them again would double up. Transform-only (GPU), WAAPI so
+  // a second change mid-flight retargets instead of restarting.
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
+  const prevRects = useRef(new Map<string, DOMRect>())
+  const prevPage = useRef(safePage)
+  const registerRow = (id: string, el: HTMLTableRowElement | null) => {
+    if (el) rowRefs.current.set(id, el)
+    else rowRefs.current.delete(id)
+  }
+  useLayoutEffect(() => {
+    const next = new Map<string, DOMRect>()
+    rowRefs.current.forEach((el, id) => next.set(id, el.getBoundingClientRect()))
+    const prev = prevRects.current
+    prevRects.current = next
+    if (prevPage.current !== safePage) {
+      prevPage.current = safePage
+      return
+    }
+    if (prev.size === 0) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    rowRefs.current.forEach((el, id) => {
+      const f = prev.get(id)
+      if (!f) return
+      const dy = f.top - el.getBoundingClientRect().top
+      if (dy === 0) return
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], {
+        duration: 260,
+        easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+      })
+    })
+  }, [items, safePage])
+
   // Numbered links: all pages when few, windowed with ellipsis when many.
   const pageSlots: (number | 'gap')[] =
     pages <= 5
@@ -439,14 +496,19 @@ export function Dashboard() {
           </Alert>
         ) : (
           <>
-        {/* Stat cards in #F7F9FF wrapper — 12px radius / 4px padding+gap */}
-        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+        {/* Stat cards in #F7F9FF wrapper — 12px radius / 4px padding+gap.
+            Wrapper lands first, cards cascade after with a 50ms stagger. */}
+        <section className="section-enter rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="grid grid-cols-3 gap-1">
-            {stats.map((s) => (
-              <div key={s.label} className="flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+            {stats.map((s, i) => (
+              <div
+                key={s.label}
+                style={{ animationDelay: `${(i + 1) * 50}ms` }}
+                className="section-enter flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5"
+              >
                 <div className="flex min-w-0 flex-col gap-1">
                   <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+                  <StatNumber value={s.value} />
                   <div className="mt-1 flex flex-col items-start gap-1">
                     {s.breakdown.map((b) => (
                       <span key={b.label} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -466,16 +528,23 @@ export function Dashboard() {
           </div>
         </section>
 
-        {/* Widgets in #F7F9FF wrapper — Latest updates 60% left, Upcoming events 40% right */}
-        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+        {/* Widgets in #F7F9FF wrapper — Latest updates 60% left, Upcoming events 40% right.
+            Wrapper lands at 100ms, both panels rise in after it (200/250ms). */}
+        <section
+          style={{ animationDelay: '100ms' }}
+          className="section-enter rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1"
+        >
           <div className="grid grid-cols-5 gap-1">
-            <div className="col-span-3 flex flex-col overflow-hidden rounded-lg border border-[#EBEBEB] bg-white">
+            <div
+              style={{ animationDelay: '200ms' }}
+              className="section-enter col-span-3 flex flex-col overflow-hidden rounded-lg border border-[#EBEBEB] bg-white"
+            >
               <div className="flex flex-col gap-0.5 px-5 pt-5">
                 <h2 className="text-base font-medium">Latest updates</h2>
                 <p className="text-xs text-muted-foreground">Recent edits across events and articles</p>
               </div>
               <div className="flex flex-col gap-4 p-5">
-                <LatestTable items={items} />
+                <LatestTable items={items} page={safePage} registerRow={registerRow} />
                 {/* c-pagination-3 composition: Previous | numbers | Next, space-between, purple active */}
                 <div className="border-t border-border pt-3">
                   <Pagination className="w-full justify-end">
@@ -522,7 +591,7 @@ export function Dashboard() {
                 </div>
               </div>
             </div>
-            <UpcomingCard upcoming={upcoming} className="col-span-2" />
+            <UpcomingCard upcoming={upcoming} className="section-enter col-span-2" />
           </div>
         </section>
           </>

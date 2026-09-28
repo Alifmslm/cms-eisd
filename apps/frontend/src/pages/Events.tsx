@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
+import { StatNumber } from '@/components/StatNumber'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -275,14 +276,19 @@ export function Events() {
           </Link>
         </div>
 
-        {/* Stat cards in #F7F9FF wrapper — same style as the dashboard. */}
-        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+        {/* Stat cards in #F7F9FF wrapper — same entrance as the dashboard:
+            wrapper lands first, cards cascade after with a 50ms stagger. */}
+        <section className="section-enter rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
           <div className="grid grid-cols-3 gap-1">
-            {stats.map((s) => (
-              <div key={s.label} className="flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
+            {stats.map((s, i) => (
+              <div
+                key={s.label}
+                style={{ animationDelay: `${(i + 1) * 50}ms` }}
+                className="section-enter flex items-stretch justify-between gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5"
+              >
                 <div className="flex min-w-0 flex-col gap-1">
                   <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-2xl font-semibold tabular-nums">{s.value}</p>
+                  <StatNumber value={s.value} />
                 </div>
                 <div className="flex shrink-0 flex-col items-end justify-start">
                   <IconTile size="sm" variant="solid" className={s.tileClassName}>
@@ -294,7 +300,10 @@ export function Events() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1">
+        <section
+          style={{ animationDelay: '100ms' }}
+          className="section-enter rounded-xl border border-[#E6EAF2] bg-[#F7F9FF] p-1"
+        >
           <div className="flex flex-col gap-4 rounded-lg border border-[#EBEBEB] bg-white p-5">
             <div className="flex flex-wrap items-center gap-x-1 gap-y-2 rounded-lg bg-white py-2">
               <div className="relative mr-auto w-full max-w-64">
