@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
+import { StatNumber } from '@/components/StatNumber'
 import { Alert, AlertDescription, AlertTitle } from '@/components/reui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -127,38 +128,6 @@ type FeedItem = {
 
 function formatLong(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-}
-
-// Count-up for stat totals: eases from 0 to the loaded value on the
-// login → dashboard handoff so the redirect lands softly instead of
-// flashing numbers in. rAF-driven (text only, tabular-nums so width never
-// shifts); instant when prefers-reduced-motion is set.
-function useCountUp(target: number, duration = 600) {
-  const [display, setDisplay] = useState(0)
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setDisplay(target)
-      return
-    }
-    let raf = 0
-    const start = performance.now()
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration)
-      const eased = 1 - Math.pow(1 - t, 3)
-      setDisplay(Math.round(eased * target))
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target, duration])
-  return display
-}
-
-function StatNumber({ value }: { value: number }) {
-  const display = useCountUp(value)
-  return (
-    <p className="stat-number-in text-2xl font-semibold tabular-nums">{display}</p>
-  )
 }
 
 // TODO: wire to the detail route when it exists.
