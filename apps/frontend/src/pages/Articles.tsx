@@ -115,7 +115,7 @@ export function Articles() {
       document.execCommand('copy')
       ta.remove()
     }
-    toast.success('Article link copied.')
+    toast.success('Article link copied.', { position: 'top-center' })
     setCopiedId(id)
     window.setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500)
   }
