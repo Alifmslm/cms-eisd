@@ -522,8 +522,8 @@ export function Events() {
               Delete “{pendingDelete.title}”?
             </h2>
             <p id="delete-event-desc" className="mt-1.5 text-sm text-muted-foreground">
-              This permanently removes the event{pendingDelete.publishedAt !== null ? ', including its public page,' : ''} and
-              its images. There is no revision history in V1, so this can’t be undone.
+              This will permanently remove the event{pendingDelete.publishedAt !== null ? ', including its public page,' : ''}{' '}
+              and its images. This can’t be undone.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="outline" autoFocus onClick={() => setPendingDelete(null)}>
