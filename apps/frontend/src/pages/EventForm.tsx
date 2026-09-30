@@ -248,9 +248,14 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
     const errs = validate(form, selfId)
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
+    if (mode === 'edit') {
+      toast.success('Event updated.')
+      void navigate('/events')
+      return
+    }
     // Prototype: no backend — show what WOULD be saved.
     setSubmitted({ slug: form.slug.trim(), title: form.title.trim(), galleryCount: gallery.length })
-    toast.success(mode === 'create' ? 'Event created as Draft.' : 'Event updated.')
+    toast.success('Event created as Draft.')
   }
 
   const field = (
@@ -458,9 +463,9 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                   </p>
                 </div>
 
-                {submitted && (
+                {submitted && mode === 'create' && (
                   <Alert>
-                    <AlertTitle>{mode === 'create' ? 'Looks good — would save as Draft' : 'Looks good — would save edits'}</AlertTitle>
+                    <AlertTitle>Looks good — would save as Draft</AlertTitle>
                     <AlertDescription>
                       “{submitted.title}” (/{submitted.slug}) passed validation against {fromDatetimeLocal(form.startDate)} →{' '}
                       {fromDatetimeLocal(form.endDate)}
