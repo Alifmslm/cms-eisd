@@ -181,6 +181,15 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
   const [submitted, setSubmitted] = useState<null | { slug: string; title: string; galleryCount: number }>(null)
+  const [confirmSave, setConfirmSave] = useState(false)
+  useEffect(() => {
+    if (!confirmSave) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setConfirmSave(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [confirmSave])
   // Two-section flow: 0 = details (title → full description), 1 = images.
   // All section state lives in this component, so going Back never loses input.
   const [step, setStep] = useState<0 | 1>(0)
@@ -248,9 +257,19 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
     const errs = validate(form, selfId)
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
+    if (mode === 'edit') {
+      setConfirmSave(true)
+      return
+    }
     // Prototype: no backend — show what WOULD be saved.
     setSubmitted({ slug: form.slug.trim(), title: form.title.trim(), galleryCount: gallery.length })
-    toast.success(mode === 'create' ? 'Event created as Draft.' : 'Event updated.')
+    toast.success('Event created as Draft.')
+  }
+
+  const confirmSaveChanges = () => {
+    setConfirmSave(false)
+    toast.success('Event updated.')
+    void navigate('/events')
   }
 
   const field = (
@@ -453,14 +472,12 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
                     Gallery images <span className="font-normal text-muted-foreground">(optional, max 4)</span>
                   </Label>
                   <GalleryUpload value={gallery} onChange={setGallery} />
-                  <p className="text-xs text-muted-foreground">
-                    V1 caps the gallery at 4 — the list is array-shaped so V2 can raise the limit without a schema change.
-                  </p>
+                  <p className="text-xs text-muted-foreground">You can add up to 4 images.</p>
                 </div>
 
-                {submitted && (
+                {submitted && mode === 'create' && (
                   <Alert>
-                    <AlertTitle>{mode === 'create' ? 'Looks good — would save as Draft' : 'Looks good — would save edits'}</AlertTitle>
+                    <AlertTitle>Looks good — would save as Draft</AlertTitle>
                     <AlertDescription>
                       “{submitted.title}” (/{submitted.slug}) passed validation against {fromDatetimeLocal(form.startDate)} →{' '}
                       {fromDatetimeLocal(form.endDate)}
@@ -484,6 +501,39 @@ export function EventForm({ mode }: { mode: 'create' | 'edit' }) {
           </div>
         </form>
       </main>
+
+      {confirmSave && mode === 'edit' && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4"
+          onClick={() => setConfirmSave(false)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="save-event-title"
+            aria-describedby="save-event-desc"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-lg"
+          >
+            <h2 id="save-event-title" className="text-base font-semibold">
+              Save changes to “{form.title.trim() || existing?.title}”?
+            </h2>
+            <p id="save-event-desc" className="mt-1.5 text-sm text-muted-foreground">
+              {existing?.publishedAt !== null
+                ? 'This event is live, so your edits will appear on the public page right away.'
+                : 'Your edits will be saved to this event. You can publish it from the events list when it’s ready.'}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="outline" autoFocus onClick={() => setConfirmSave(false)}>
+                Keep editing
+              </Button>
+              <Button className="text-white" onClick={confirmSaveChanges}>
+                Save changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -115,7 +115,7 @@ export function Articles() {
       document.execCommand('copy')
       ta.remove()
     }
-    toast.success('Article link copied.')
+    toast.success('Article link copied.', { position: 'top-center' })
     setCopiedId(id)
     window.setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500)
   }
@@ -467,9 +467,9 @@ export function Articles() {
               Delete “{pendingDelete.title}”?
             </h2>
             <p id="delete-article-desc" className="mt-1.5 text-sm text-muted-foreground">
-              This permanently removes the article
+              This will permanently remove the article
               {pendingDelete.publishedAt !== null ? ', including its public page,' : ''} and it
-              can’t be undone — there is no revision history in V1.
+              can’t be undone.
             </p>
             {deleteError && (
               <p className="mt-3 text-xs text-destructive" role="alert">
