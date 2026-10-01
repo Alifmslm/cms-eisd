@@ -15,4 +15,4 @@ The system SHALL display a Total achievements KPI on the dashboard with Finalist
 
 #### Scenario: Stats API includes achievements
 - **WHEN** authenticated user calls `GET /api/dashboard`
-- **THEN** response includes `totalAchievements`, `finalistAchievements`, and `championAchievements` alongside existing event/article counts without changing existing fields
+- **THEN** response includes `totalAchievements`, `finalistAchievements`, `championAchievements`, and `achievementsByYear` (counts keyed by `YYYY-MM`) alongside existing event/article counts without changing existing fields

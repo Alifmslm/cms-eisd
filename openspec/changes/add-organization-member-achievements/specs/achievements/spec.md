@@ -7,10 +7,10 @@ Tracks organization member competition achievements (hackathons, UI/UX, essay, s
 ## ADDED Requirements
 
 ### Requirement: Create member achievement
-The system SHALL allow an admin to create a member achievement record with member names, assistant code, competition category, competition level, achievement result, and competition name.
+The system SHALL allow an admin to create a member achievement record with member names, assistant code, competition category, competition level, achievement result, competition name, and required competition year-month (`YYYY-MM`).
 
 #### Scenario: Admin creates achievement with preset category
-- **WHEN** admin submits one or more member names, a 4-letter assistant code, category `Hackathon`, level `National`, result `Champion`, and competition name
+- **WHEN** admin submits one or more member names, a 4-letter assistant code, category `Hackathon`, level `National`, result `Champion`, competition name, and year-month `2026-09`
 - **THEN** system creates the record and returns it with generated id and timestamps
 
 #### Scenario: Admin creates achievement with Other category
@@ -18,7 +18,7 @@ The system SHALL allow an admin to create a member achievement record with membe
 - **THEN** system stores the custom text as the effective category and returns the created record
 
 #### Scenario: Validation rejects bad input
-- **WHEN** admin submits empty member names, assistant code not exactly 4 letters, `Other` without custom text, or empty competition name
+- **WHEN** admin submits empty member names, assistant code not exactly 4 letters, `Other` without custom text, empty competition name, or missing/malformed year-month (not `YYYY-MM` or month outside `01-12`)
 - **THEN** system returns 400 with field-level errors and creates nothing
 
 #### Scenario: Non-admin cannot create
@@ -30,14 +30,14 @@ The system SHALL allow an admin to create a member achievement record with membe
 - **THEN** system returns 401 Unauthorized
 
 ### Requirement: List and filter achievements
-The system SHALL allow authenticated users to list achievements ordered by most recently updated first, with search and filters.
+The system SHALL allow authenticated users to list achievements ordered by competition year-month descending (then most recently updated), with search and filters including year/year-month.
 
-#### Scenario: List ordered by recency
+#### Scenario: List ordered by year-month
 - **WHEN** authenticated user lists achievements
-- **THEN** system returns records ordered by `updatedAt` descending
+- **THEN** system returns records ordered by `competitionYearMonth` descending, then `updatedAt` descending
 
 #### Scenario: Search and filter
-- **WHEN** authenticated user filters by category, level, or result, or searches competition name / member name
+- **WHEN** authenticated user filters by category, level, result, or year/year-month, or searches competition name / member name
 - **THEN** system returns only matching records
 
 #### Scenario: Unauthenticated cannot list
@@ -79,11 +79,15 @@ The system SHALL allow an admin to permanently delete an achievement record.
 - **THEN** system returns 403 Forbidden
 
 ### Requirement: Achievement field rules
-The system SHALL enforce field rules: member names is 1+ non-empty names; assistant code is exactly 4 A-Z letters (case-insensitive input, stored uppercase); category is one of `Essay`, `UI/UX Competition`, `Software Engineering`, `Hackathon`, `Other` (custom text required 1-100 chars when `Other`); level is `International` or `National`; result is one of `Champion`, `1st Place`, `2nd Place`, `3rd Place`, `Finalist`; competition name is 1-200 chars.
+The system SHALL enforce field rules: member names is 1+ non-empty names; assistant code is exactly 4 A-Z letters (case-insensitive input, stored uppercase); category is one of `Essay`, `UI/UX Competition`, `Software Engineering`, `Hackathon`, `Other` (custom text required 1-100 chars when `Other`); level is `International` or `National`; result is one of `Champion`, `1st Place`, `2nd Place`, `3rd Place`, `Finalist`; competition name is 1-200 chars; competition year-month is required `YYYY-MM` with month `01-12`.
 
 #### Scenario: Assistant code normalization
 - **WHEN** admin submits assistant code `abcd`
 - **THEN** system stores `ABCD`
+
+#### Scenario: Year-month validation
+- **WHEN** admin submits year-month `2026-13` or `Sept 2026`
+- **THEN** system returns 400 and creates nothing
 
 #### Scenario: Champion bucket definition
 - **WHEN** dashboard counts champions
@@ -98,7 +102,7 @@ The system SHALL provide an authenticated Achievements list page at `/achievemen
 
 #### Scenario: Admin manages from UI
 - **WHEN** admin opens the Achievements page
-- **THEN** system shows list with search/filter, New-achievement action, per-row edit and delete actions with a confirmation step before delete
+- **THEN** system shows list with search/filter (including year filter + year-month sort), month input on the form, New-achievement action, per-row edit and delete actions with a confirmation step before delete
 
 #### Scenario: Member role is read-only in UI
 - **WHEN** user with `user` role opens the Achievements page
