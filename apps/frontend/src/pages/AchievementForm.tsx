@@ -17,7 +17,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/useAuth'
 import {
-  effectiveCategory,
   type AchievementCategory,
   type AchievementLevel,
   type AchievementMember,
@@ -104,7 +103,7 @@ function Sidebar() {
       key={label}
       to={to}
       className={`relative flex h-8 items-center gap-2 rounded-md px-2 pl-3 text-[13px] font-medium ${
-        active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted'
+        active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-[#F5F5F5]'
       }`}
     >
       {active && (
@@ -115,7 +114,7 @@ function Sidebar() {
     </Link>
   )
   return (
-    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-[#FAFAFA] p-3">
+    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-white p-3">
       <div className="flex items-center gap-2 px-1">
         <span className="grid size-7 place-items-center rounded-md bg-secondary text-secondary-foreground">
           <FlaskConical className="size-3.5" />
@@ -184,7 +183,6 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
         },
   )
   const [errors, setErrors] = useState<Errors>({})
-  const [submitted, setSubmitted] = useState<{ title: string } | null>(null)
   const [confirmSave, setConfirmSave] = useState(false)
 
   if (mode === 'edit' && !existing) {
@@ -238,24 +236,15 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
       setConfirmSave(true)
       return
     }
-    // Prototype: no backend — show what WOULD be saved.
-    setSubmitted({ title: form.competitionName.trim() })
+    // Prototype: no backend — redirect to the list with a success toast.
     toast.success('Achievement created.')
+    void navigate('/achievements')
   }
 
   const confirmSaveChanges = () => {
     setConfirmSave(false)
     toast.success('Achievement updated.')
     void navigate('/achievements')
-  }
-
-  const summary = () => {
-    const pairs = form.members
-      .map((m) => `${m.name.trim()} (${m.assistantCode.trim().toUpperCase()})`)
-      .join(', ')
-    const cat =
-      form.category === 'Other' ? form.customCategory.trim() : effectiveCategory(form)
-    return `${pairs} · ${cat} · ${form.level} · ${form.result} · ${form.competitionYearMonth}`
   }
 
   const field = (
@@ -341,7 +330,7 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
                     {form.members.map((m) => (
                       <li
                         key={m.assistantCode}
-                        className="inline-flex items-center justify-between gap-2 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-medium"
+                        className="inline-flex items-center justify-between gap-2 rounded-lg border border-border bg-[#F7F9FF] px-2.5 py-1.5 text-xs font-medium"
                       >
                         <span>
                           {m.name} <span className="text-muted-foreground">({m.assistantCode})</span>
@@ -467,13 +456,6 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
                   </option>
                 ))}
               </select>,
-            )}
-
-            {submitted && mode === 'create' && (
-              <Alert>
-                <AlertTitle>Looks good — would save</AlertTitle>
-                <AlertDescription>“{submitted.title}” passed validation: {summary()}.</AlertDescription>
-              </Alert>
             )}
 
             <div className="flex items-center justify-end gap-2 border-t border-border pt-4">

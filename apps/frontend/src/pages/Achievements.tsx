@@ -41,7 +41,6 @@ import {
   type AchievementLevel,
   type AchievementResult,
 } from '@/lib/achievements'
-import { isAdmin } from '@/lib/roles'
 import { MOCK_ACHIEVEMENTS } from '@/mocks/achievements.fixtures'
 
 type LevelFilter = 'All' | AchievementLevel
@@ -75,7 +74,7 @@ function Sidebar() {
       key={label}
       to={to}
       className={`relative flex h-8 items-center gap-2 rounded-md px-2 pl-3 text-[13px] font-medium ${
-        active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted'
+        active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-[#F5F5F5]'
       }`}
     >
       {active && (
@@ -87,7 +86,7 @@ function Sidebar() {
   )
 
   return (
-    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-[#FAFAFA] p-3">
+    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-white p-3">
       <div className="flex items-center gap-2 px-1">
         <span className="grid size-7 place-items-center rounded-md bg-secondary text-secondary-foreground">
           <FlaskConical className="size-3.5" />
@@ -123,8 +122,9 @@ function ResultBadge({ result }: { result: string }) {
 }
 
 export function Achievements() {
-  const { user } = useAuth()
-  const admin = isAdmin(user?.role)
+  // TEMP (disable-auth-for-fe-testing): mock mode like Events/Articles —
+  // all actions visible without a session. Real role-gating + backend
+  // enforcement land with the API wiring (tasks 3.1/3.3).
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(true)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All')
@@ -276,13 +276,11 @@ export function Achievements() {
             <h1 className="text-2xl font-semibold">Achievements</h1>
             <p className="text-sm text-muted-foreground">Competition wins and finalist records</p>
           </div>
-          {admin && (
-            <Link to="/achievements/new">
-              <Button className="text-white">
-                <Plus className="size-4" /> New achievement
-              </Button>
-            </Link>
-          )}
+          <Link to="/achievements/new">
+            <Button className="text-white">
+              <Plus className="size-4" /> New achievement
+            </Button>
+          </Link>
         </div>
 
         {/* Stat cards in #F7F9FF wrapper — same entrance as the dashboard:
@@ -380,7 +378,7 @@ export function Achievements() {
                       <th className="pb-2 text-left font-medium">Category</th>
                       <th className="pb-2 font-medium">Result</th>
                       <th className="pb-2 font-medium whitespace-nowrap">Year</th>
-                      {admin && <th className="w-24 pb-2" />}
+                      <th className="w-24 pb-2" />
                     </tr>
                   </thead>
                   <tbody key={safePage}>
@@ -417,29 +415,27 @@ export function Achievements() {
                         <td className="py-3 pr-3 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
                           {formatMonth(a.competitionYearMonth)}
                         </td>
-                        {admin && (
-                          <td className="py-3 pr-2 text-right">
-                            <span className="inline-flex items-center gap-3">
-                              <Link
-                                to={`/achievements/${a.id}/edit`}
-                                title={`Edit “${a.competitionName}”`}
-                                aria-label={`Edit ${a.competitionName}`}
-                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-secondary/10 hover:text-secondary"
-                              >
-                                <Pencil className="size-3.5" />
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => setPendingDelete(a)}
-                                title={`Delete “${a.competitionName}” permanently`}
-                                aria-label={`Delete ${a.competitionName}`}
-                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </button>
-                            </span>
-                          </td>
-                        )}
+                        <td className="py-3 pr-2 text-right">
+                          <span className="inline-flex items-center gap-3">
+                            <Link
+                              to={`/achievements/${a.id}/edit`}
+                              title={`Edit “${a.competitionName}”`}
+                              aria-label={`Edit ${a.competitionName}`}
+                              className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-secondary/10 hover:text-secondary"
+                            >
+                              <Pencil className="size-3.5" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setPendingDelete(a)}
+                              title={`Delete “${a.competitionName}” permanently`}
+                              aria-label={`Delete ${a.competitionName}`}
+                              className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

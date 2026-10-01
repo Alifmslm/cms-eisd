@@ -148,7 +148,7 @@ function Sidebar() {
   const { signOut } = useAuth()
 
   return (
-    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-[#FAFAFA] p-3">
+    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-white p-3">
       <div className="flex items-center gap-2 px-1">
         <span className="grid size-7 place-items-center rounded-md bg-secondary text-secondary-foreground">
           <FlaskConical className="size-3.5" />
@@ -163,7 +163,7 @@ function Sidebar() {
               key={item.label}
               to={item.to}
               className={`relative flex h-8 items-center gap-2 rounded-md px-2 pl-3 text-[13px] font-medium ${
-                item.active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted'
+                item.active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-[#F5F5F5]'
               }`}
             >
               {item.active && (
