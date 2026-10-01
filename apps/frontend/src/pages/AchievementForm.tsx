@@ -20,6 +20,7 @@ import {
   effectiveCategory,
   type AchievementCategory,
   type AchievementLevel,
+  type AchievementMember,
   type AchievementResult,
 } from '@/lib/achievements'
 import { MOCK_ACHIEVEMENTS } from '@/mocks/achievements.fixtures'
@@ -32,16 +33,16 @@ const CATEGORIES: AchievementCategory[] = [
   'Other',
 ]
 const LEVELS: AchievementLevel[] = ['International', 'National']
-const RESULTS: AchievementResult[] = ['Champion', '1st Place', '2nd Place', '3rd Place', 'Finalist']
+const RESULTS: AchievementResult[] = ['1st Place', '2nd Place', '3rd Place', 'Finalist']
 
 const YEAR_MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 const ASSISTANT_CODE_RE = /^[A-Z]{4}$/
 
 interface FormState {
   competitionName: string
-  memberNames: string[]
+  members: AchievementMember[]
   nameDraft: string
-  assistantCode: string
+  codeDraft: string
   category: AchievementCategory
   customCategory: string
   level: AchievementLevel
@@ -52,8 +53,7 @@ interface FormState {
 type Errors = Partial<
   Record<
     | 'competitionName'
-    | 'memberNames'
-    | 'assistantCode'
+    | 'members'
     | 'category'
     | 'customCategory'
     | 'level'
@@ -68,11 +68,19 @@ function validate(f: FormState): Errors {
   if (!f.competitionName.trim()) e.competitionName = 'Competition name is required.'
   else if (f.competitionName.trim().length > 200)
     e.competitionName = 'Competition name must be 200 characters or fewer.'
-  const names = f.memberNames.map((n) => n.trim()).filter(Boolean)
-  if (names.length === 0) e.memberNames = 'Add at least one member name.'
-  if (!f.assistantCode.trim()) e.assistantCode = 'Assistant code is required.'
-  else if (!ASSISTANT_CODE_RE.test(f.assistantCode.trim().toUpperCase()))
-    e.assistantCode = 'Assistant code must be exactly 4 letters (A–Z).'
+  const names = f.members.map((m) => m.name.trim()).filter(Boolean)
+  if (names.length === 0) e.members = 'Add at least one member with their assistant code.'
+  else {
+    const bad = f.members.find(
+      (m) => !m.name.trim() || !ASSISTANT_CODE_RE.test(m.assistantCode.trim().toUpperCase()),
+    )
+    if (bad) e.members = 'Each member needs a name and a 4-letter code (A–Z).'
+    else {
+      const codes = f.members.map((m) => m.assistantCode.trim().toUpperCase())
+      if (new Set(codes).size !== codes.length)
+        e.members = 'Assistant codes must be unique — one code per member.'
+    }
+  }
   if (f.category === 'Other') {
     if (!f.customCategory.trim()) e.customCategory = 'Describe the category when “Other” is selected.'
     else if (f.customCategory.trim().length > 100)
@@ -148,9 +156,9 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
     mode === 'edit' && existing
       ? {
           competitionName: existing.competitionName,
-          memberNames: [...existing.memberNames],
+          members: existing.members.map((m) => ({ ...m })),
           nameDraft: '',
-          assistantCode: existing.assistantCode,
+          codeDraft: '',
           category: (CATEGORIES as string[]).includes(existing.category)
             ? (existing.category as AchievementCategory)
             : 'Other',
@@ -165,13 +173,13 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
         }
       : {
           competitionName: '',
-          memberNames: [],
+          members: [],
           nameDraft: '',
-          assistantCode: '',
+          codeDraft: '',
           category: 'Hackathon',
           customCategory: '',
           level: 'National',
-          result: 'Champion',
+          result: '1st Place',
           competitionYearMonth: '',
         },
   )
@@ -201,18 +209,24 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }))
 
-  const addName = () => {
+  const addMember = () => {
     const name = form.nameDraft.trim()
-    if (!name) return
-    const dup = form.memberNames.some((n) => n.trim().toLowerCase() === name.toLowerCase())
-    if (!dup) set('memberNames', [...form.memberNames, name])
+    const code = form.codeDraft.trim().toUpperCase()
+    if (!name || !ASSISTANT_CODE_RE.test(code)) return
+    const dup = form.members.some(
+      (m) =>
+        m.name.trim().toLowerCase() === name.toLowerCase() ||
+        m.assistantCode.trim().toUpperCase() === code,
+    )
+    if (!dup) set('members', [...form.members, { name, assistantCode: code }])
     set('nameDraft', '')
+    set('codeDraft', '')
   }
 
-  const removeName = (name: string) =>
+  const removeMember = (code: string) =>
     set(
-      'memberNames',
-      form.memberNames.filter((n) => n !== name),
+      'members',
+      form.members.filter((m) => m.assistantCode !== code),
     )
 
   const onSubmit = (ev: React.FormEvent) => {
@@ -236,10 +250,12 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
   }
 
   const summary = () => {
-    const names = form.memberNames.map((n) => n.trim()).filter(Boolean).join(', ')
+    const pairs = form.members
+      .map((m) => `${m.name.trim()} (${m.assistantCode.trim().toUpperCase()})`)
+      .join(', ')
     const cat =
       form.category === 'Other' ? form.customCategory.trim() : effectiveCategory(form)
-    return `${names} · ${form.assistantCode.trim().toUpperCase()} · ${cat} · ${form.level} · ${form.result} · ${form.competitionYearMonth}`
+    return `${pairs} · ${cat} · ${form.level} · ${form.result} · ${form.competitionYearMonth}`
   }
 
   const field = (
@@ -302,83 +318,84 @@ export function AchievementForm({ mode }: { mode: 'create' | 'edit' }) {
               />,
             )}
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              {field(
-                'assistantCode',
-                'Assistant code',
-                <Input
-                  id="ach-assistantCode"
-                  className={`${inputCls} uppercase`}
-                  value={form.assistantCode}
-                  onChange={(e) =>
-                    set('assistantCode', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4))
-                  }
-                  placeholder="e.g. EISD"
-                  maxLength={4}
-                  aria-invalid={!!errors.assistantCode}
-                />,
-                'Exactly 4 letters — stored uppercase.',
-              )}
-              {field(
-                'competitionYearMonth',
-                'Competition month',
-                <Input
-                  id="ach-competitionYearMonth"
-                  type="month"
-                  className={inputCls}
-                  value={form.competitionYearMonth}
-                  onChange={(e) => set('competitionYearMonth', e.target.value)}
-                  aria-invalid={!!errors.competitionYearMonth}
-                />,
-                'Month the competition took place.',
-              )}
-            </div>
+            {field(
+              'competitionYearMonth',
+              'Competition month',
+              <Input
+                id="ach-competitionYearMonth"
+                type="month"
+                className={inputCls}
+                value={form.competitionYearMonth}
+                onChange={(e) => set('competitionYearMonth', e.target.value)}
+                aria-invalid={!!errors.competitionYearMonth}
+              />,
+              'Month the competition took place.',
+            )}
 
             {field(
-              'memberNames',
-              'Member names',
+              'members',
+              'Members',
               <div className="flex flex-col gap-2">
-                {form.memberNames.length > 0 && (
-                  <ul className="flex flex-wrap gap-1.5" aria-label="Added members">
-                    {form.memberNames.map((n) => (
+                {form.members.length > 0 && (
+                  <ul className="flex flex-col gap-1.5" aria-label="Added members">
+                    {form.members.map((m) => (
                       <li
-                        key={n}
-                        className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium"
+                        key={m.assistantCode}
+                        className="inline-flex items-center justify-between gap-2 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-medium"
                       >
-                        {n}
+                        <span>
+                          {m.name} <span className="text-muted-foreground">({m.assistantCode})</span>
+                        </span>
                         <button
                           type="button"
-                          onClick={() => removeName(n)}
-                          aria-label={`Remove ${n}`}
-                          className="grid size-4 place-items-center rounded-full text-muted-foreground hover:text-destructive"
+                          onClick={() => removeMember(m.assistantCode)}
+                          aria-label={`Remove ${m.name}`}
+                          className="grid size-5 place-items-center rounded-full text-muted-foreground hover:text-destructive"
                         >
-                          <X className="size-3" />
+                          <X className="size-3.5" />
                         </button>
                       </li>
                     ))}
                   </ul>
                 )}
-                <div className="flex gap-2">
+                <div className="grid gap-2 sm:grid-cols-[1fr_7rem_auto]">
                   <Input
-                    id="ach-memberNames"
+                    id="ach-members"
                     className={inputCls}
                     value={form.nameDraft}
                     onChange={(e) => set('nameDraft', e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
-                        addName()
+                        addMember()
                       }
                     }}
-                    placeholder="Type a name, press Enter or Add"
-                    aria-invalid={!!errors.memberNames}
+                    placeholder="Member name"
+                    aria-invalid={!!errors.members}
                   />
-                  <Button type="button" variant="outline" onClick={addName}>
+                  <Input
+                    className={`${inputCls} uppercase`}
+                    value={form.codeDraft}
+                    onChange={(e) =>
+                      set('codeDraft', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addMember()
+                      }
+                    }}
+                    placeholder="Code"
+                    maxLength={4}
+                    aria-label="Assistant code"
+                    aria-invalid={!!errors.members}
+                  />
+                  <Button type="button" variant="outline" onClick={addMember}>
                     Add
                   </Button>
                 </div>
               </div>,
-              'One or more members — duplicates are ignored.',
+              'Each member has their own 4-letter code — codes must be unique across all records.',
             )}
 
             <div className="grid gap-5 sm:grid-cols-2">

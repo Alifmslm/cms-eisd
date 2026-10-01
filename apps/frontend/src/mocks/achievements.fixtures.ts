@@ -12,12 +12,14 @@ function iso(offsetDays: number): string {
 export const MOCK_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'ach-01',
-    memberNames: ['Ahmad Rizki', 'Siti Rahma'],
-    assistantCode: 'EISD',
+    members: [
+      { name: 'Ahmad Rizki', assistantCode: 'AHMD' },
+      { name: 'Siti Rahma', assistantCode: 'STRA' },
+    ],
     category: 'Hackathon',
     customCategory: null,
     level: 'International',
-    result: 'Champion',
+    result: '1st Place',
     competitionName: 'Global Hackathon 2026',
     competitionYearMonth: '2026-09',
     createdAt: iso(-20),
@@ -25,8 +27,7 @@ export const MOCK_ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-02',
-    memberNames: ['Dewi Lestari'],
-    assistantCode: 'UXID',
+    members: [{ name: 'Dewi Lestari', assistantCode: 'DWLS' }],
     category: 'UI/UX Competition',
     customCategory: null,
     level: 'National',
@@ -38,8 +39,10 @@ export const MOCK_ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-03',
-    memberNames: ['Maya Kusuma', 'Dimas Prasetyo'],
-    assistantCode: 'GAME',
+    members: [
+      { name: 'Maya Kusuma', assistantCode: 'MYKS' },
+      { name: 'Dimas Prasetyo', assistantCode: 'DMPR' },
+    ],
     category: 'Other',
     customCategory: 'Game Jam',
     level: 'National',
@@ -51,8 +54,11 @@ export const MOCK_ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-04',
-    memberNames: ['Budi Santoso', 'Ani Wijaya', 'Rina Putri'],
-    assistantCode: 'ESSY',
+    members: [
+      { name: 'Budi Santoso', assistantCode: 'BDSN' },
+      { name: 'Ani Wijaya', assistantCode: 'ANWJ' },
+      { name: 'Rina Putri', assistantCode: 'RNPT' },
+    ],
     category: 'Essay',
     customCategory: null,
     level: 'National',
@@ -64,8 +70,7 @@ export const MOCK_ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-05',
-    memberNames: ['Fajar Nugroho'],
-    assistantCode: 'SOFT',
+    members: [{ name: 'Fajar Nugroho', assistantCode: 'FJRN' }],
     category: 'Software Engineering',
     customCategory: null,
     level: 'International',

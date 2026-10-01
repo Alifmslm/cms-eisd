@@ -7,19 +7,23 @@ Tracks organization member competition achievements (hackathons, UI/UX, essay, s
 ## ADDED Requirements
 
 ### Requirement: Create member achievement
-The system SHALL allow an admin to create a member achievement record with member names, assistant code, competition category, competition level, achievement result, competition name, and required competition year-month (`YYYY-MM`).
+The system SHALL allow an admin to create a member achievement record with one or more members (each member has a name and their own 4-letter assistant code), competition category, competition level, achievement result, competition name, and required competition year-month (`YYYY-MM`).
 
-#### Scenario: Admin creates achievement with preset category
-- **WHEN** admin submits one or more member names, a 4-letter assistant code, category `Hackathon`, level `National`, result `Champion`, competition name, and year-month `2026-09`
-- **THEN** system creates the record and returns it with generated id and timestamps
+#### Scenario: Admin creates team achievement
+- **WHEN** admin submits two members (each with name and unique 4-letter code), category `Hackathon`, level `National`, result `1st Place`, competition name, and year-month `2026-09`
+- **THEN** system creates the record with both member-code pairs and returns it with generated id and timestamps
 
 #### Scenario: Admin creates achievement with Other category
 - **WHEN** admin submits category `Other` with custom category text (e.g. `Game Jam`)
 - **THEN** system stores the custom text as the effective category and returns the created record
 
 #### Scenario: Validation rejects bad input
-- **WHEN** admin submits empty member names, assistant code not exactly 4 letters, `Other` without custom text, empty competition name, or missing/malformed year-month (not `YYYY-MM` or month outside `01-12`)
+- **WHEN** admin submits empty member names, an assistant code not exactly 4 letters, `Other` without custom text, empty competition name, or missing/malformed year-month (not `YYYY-MM` or month outside `01-12`)
 - **THEN** system returns 400 with field-level errors and creates nothing
+
+#### Scenario: Duplicate assistant code rejected
+- **WHEN** admin submits a member whose assistant code is already used by another record
+- **THEN** system returns 409 with a field-level error naming the code and creates nothing
 
 #### Scenario: Non-admin cannot create
 - **WHEN** user with `user` role calls the create endpoint
@@ -79,11 +83,15 @@ The system SHALL allow an admin to permanently delete an achievement record.
 - **THEN** system returns 403 Forbidden
 
 ### Requirement: Achievement field rules
-The system SHALL enforce field rules: member names is 1+ non-empty names; assistant code is exactly 4 A-Z letters (case-insensitive input, stored uppercase); category is one of `Essay`, `UI/UX Competition`, `Software Engineering`, `Hackathon`, `Other` (custom text required 1-100 chars when `Other`); level is `International` or `National`; result is one of `Champion`, `1st Place`, `2nd Place`, `3rd Place`, `Finalist`; competition name is 1-200 chars; competition year-month is required `YYYY-MM` with month `01-12`.
+The system SHALL enforce field rules: members is 1+ entries, each with a non-empty name and their own assistant code of exactly 4 A-Z letters (case-insensitive input, stored uppercase); codes are unique within the record and across all records (duplicate returns 409); category is one of `Essay`, `UI/UX Competition`, `Software Engineering`, `Hackathon`, `Other` (custom text required 1-100 chars when `Other`); level is `International` or `National`; result is one of `1st Place`, `2nd Place`, `3rd Place`, `Finalist`; competition name is 1-200 chars; competition year-month is required `YYYY-MM` with month `01-12`.
 
 #### Scenario: Assistant code normalization
-- **WHEN** admin submits assistant code `abcd`
+- **WHEN** admin submits a member with assistant code `abcd`
 - **THEN** system stores `ABCD`
+
+#### Scenario: Member count matches code count
+- **WHEN** admin submits two members with two codes
+- **THEN** system stores both pairs; a submission with mismatched counts returns 400
 
 #### Scenario: Year-month validation
 - **WHEN** admin submits year-month `2026-13` or `Sept 2026`
@@ -91,7 +99,7 @@ The system SHALL enforce field rules: member names is 1+ non-empty names; assist
 
 #### Scenario: Champion bucket definition
 - **WHEN** dashboard counts champions
-- **THEN** records with result `Champion` or `1st Place` count as champions, records with result `Finalist` count as finalists
+- **THEN** records with result `1st Place`, `2nd Place`, or `3rd Place` count as champions (competitions won), records with result `Finalist` count as finalists
 
 ### Requirement: Achievements page and navigation
 The system SHALL provide an authenticated Achievements list page at `/achievements` linked from the sidebar, plus create/edit forms and delete confirmation; write controls are visible only to `admin` role.

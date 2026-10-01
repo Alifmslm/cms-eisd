@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import {
   Calendar,
   ChevronRight,
-  FileText,
   FlaskConical,
   LayoutDashboard,
   LogOut,
@@ -47,6 +46,16 @@ const MOCK_DASHBOARD: DashboardResponse = {
   publishedArticles: 2,
   draftArticles: 1,
   upcomingEvents: 2,
+  totalAchievements: 5,
+  finalistAchievements: 1,
+  championAchievements: 4,
+  achievementsByYear: {
+    '2026-09': 1,
+    '2026-05': 1,
+    '2026-02': 1,
+    '2025-11': 1,
+    '2025-08': 1,
+  },
   upcomingEventsList: [
     {
       id: 'evt-mock-1',
@@ -452,13 +461,13 @@ export function Dashboard() {
       ],
     },
     {
-      label: 'Drafts',
-      value: (dashboard?.draftEvents ?? 0) + (dashboard?.draftArticles ?? 0),
-      icon: FileText,
-      tileClassName: 'bg-cyan-600 text-white',
+      label: 'Total achievements',
+      value: dashboard?.totalAchievements ?? 0,
+      icon: Trophy,
+      tileClassName: 'bg-violet-500 text-white',
       breakdown: [
-        { dot: 'bg-[#F59E0B]', label: 'Events', value: dashboard?.draftEvents ?? 0 },
-        { dot: 'bg-[#494CA0]', label: 'Articles', value: dashboard?.draftArticles ?? 0 },
+        { dot: 'bg-[#00D97A]', label: 'Champions', value: dashboard?.championAchievements ?? 0 },
+        { dot: 'bg-[#F59E0B]', label: 'Finalists', value: dashboard?.finalistAchievements ?? 0 },
       ],
     },
   ]

@@ -34,6 +34,8 @@ import { FilterDropdown } from '@/components/FilterDropdown'
 import { useAuth } from '@/context/useAuth'
 import {
   effectiveCategory,
+  isChampion,
+  memberNames,
   type Achievement,
   type AchievementCategory,
   type AchievementLevel,
@@ -42,9 +44,9 @@ import {
 import { isAdmin } from '@/lib/roles'
 import { MOCK_ACHIEVEMENTS } from '@/mocks/achievements.fixtures'
 
-type CategoryFilter = 'All' | AchievementCategory
 type LevelFilter = 'All' | AchievementLevel
 type ResultFilter = 'All' | AchievementResult
+type CategoryFilter = 'All' | AchievementCategory
 
 const CATEGORY_FILTERS: CategoryFilter[] = [
   'All',
@@ -55,20 +57,9 @@ const CATEGORY_FILTERS: CategoryFilter[] = [
   'Other',
 ]
 const LEVEL_FILTERS: LevelFilter[] = ['All', 'International', 'National']
-const RESULT_FILTERS: ResultFilter[] = [
-  'All',
-  'Champion',
-  '1st Place',
-  '2nd Place',
-  '3rd Place',
-  'Finalist',
-]
+const RESULT_FILTERS: ResultFilter[] = ['All', '1st Place', '2nd Place', '3rd Place', 'Finalist']
 
 const PAGE_SIZE = 5
-
-function isChampion(a: Pick<Achievement, 'result'>): boolean {
-  return a.result === 'Champion' || a.result === '1st Place'
-}
 
 function formatMonth(ym: string): string {
   const [y, m] = ym.split('-')
@@ -125,7 +116,7 @@ function Sidebar() {
 }
 
 function ResultBadge({ result }: { result: string }) {
-  if (result === 'Champion' || result === '1st Place')
+  if (result === '1st Place' || result === '2nd Place' || result === '3rd Place')
     return <Badge variant="success-light">{result}</Badge>
   if (result === 'Finalist') return <Badge variant="warning-light">{result}</Badge>
   return <Badge variant="info-light">{result}</Badge>
@@ -214,7 +205,7 @@ export function Achievements() {
       )
       .filter((a) =>
         q
-          ? `${a.competitionName} ${a.memberNames.join(' ')} ${a.assistantCode}`
+          ? `${a.competitionName} ${memberNames(a).join(' ')} ${a.members.map((m) => m.assistantCode).join(' ')}`
               .toLowerCase()
               .includes(q)
           : true,
@@ -386,7 +377,7 @@ export function Achievements() {
                     <tr className="text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                       <th className="pb-2 font-medium">Competition</th>
                       <th className="pb-2 font-medium">Members</th>
-                      <th className="pb-2 font-medium">Category</th>
+                      <th className="pb-2 text-left font-medium">Category</th>
                       <th className="pb-2 font-medium">Result</th>
                       <th className="pb-2 font-medium whitespace-nowrap">Year</th>
                       {admin && <th className="w-24 pb-2" />}
@@ -407,14 +398,14 @@ export function Achievements() {
                           <div className="flex min-w-0 flex-col">
                             <span className="block truncate font-medium">{a.competitionName}</span>
                             <span className="truncate text-xs text-muted-foreground">
-                              {a.assistantCode} · {a.level}
+                              {a.members.map((m) => `${m.name} (${m.assistantCode})`).join(', ')}
                             </span>
                           </div>
                         </td>
                         <td className="max-w-48 py-3 pr-3 text-xs text-muted-foreground">
-                          <span className="block truncate">{a.memberNames.join(', ')}</span>
+                          <span className="block truncate">{a.level}</span>
                         </td>
-                        <td className="py-3 pr-3 text-xs whitespace-nowrap text-muted-foreground">
+                        <td className="py-3 pr-3 text-left text-xs whitespace-nowrap text-muted-foreground">
                           {effectiveCategory(a)}
                           {a.category === 'Other' && (
                             <span className="ml-1 text-[10px]">(Other)</span>

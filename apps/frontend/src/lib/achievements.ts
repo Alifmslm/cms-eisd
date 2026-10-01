@@ -9,17 +9,17 @@ export type AchievementCategory =
 
 export type AchievementLevel = 'International' | 'National'
 
-export type AchievementResult =
-  | 'Champion'
-  | '1st Place'
-  | '2nd Place'
-  | '3rd Place'
-  | 'Finalist'
+export type AchievementResult = '1st Place' | '2nd Place' | '3rd Place' | 'Finalist'
+
+/** One member and their own unique 4-letter assistant code. */
+export interface AchievementMember {
+  name: string
+  assistantCode: string
+}
 
 export interface Achievement {
   id: string
-  memberNames: string[]
-  assistantCode: string
+  members: AchievementMember[]
   category: string
   customCategory: string | null
   level: string
@@ -35,6 +35,15 @@ export function effectiveCategory(a: Pick<Achievement, 'category' | 'customCateg
   return a.category === 'Other' && a.customCategory ? a.customCategory : a.category
 }
 
+export function memberNames(a: Pick<Achievement, 'members'>): string[] {
+  return a.members.map((m) => m.name)
+}
+
+/** Podium finish (a competition won). Finalist is tracked separately. */
+export function isChampion(a: Pick<Achievement, 'result'>): boolean {
+  return a.result === '1st Place' || a.result === '2nd Place' || a.result === '3rd Place'
+}
+
 export interface AchievementFilters {
   category?: AchievementCategory
   level?: AchievementLevel
@@ -43,13 +52,12 @@ export interface AchievementFilters {
   yearMonth?: string
   /** Year prefix match, `YYYY` (matches any month of that year). */
   year?: string
-  /** Matches competition name or member name. */
+  /** Matches competition name, member name, or assistant code. */
   search?: string
 }
 
 export interface CreateAchievementInput {
-  memberNames: string[]
-  assistantCode: string
+  members: AchievementMember[]
   category: AchievementCategory
   customCategory?: string
   level: AchievementLevel
