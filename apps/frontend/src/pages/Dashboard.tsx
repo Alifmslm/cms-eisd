@@ -10,6 +10,7 @@ import {
   LogOut,
   Newspaper,
   Plus,
+  Trophy,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
@@ -112,6 +113,7 @@ const NAV = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, active: true },
   { label: 'Events', to: '/events', icon: Calendar, active: false },
   { label: 'Articles', to: '/articles', icon: Newspaper, active: false },
+  { label: 'Achievements', to: '/achievements', icon: Trophy, active: false },
 ]
 
 const PAGE_SIZE = 5

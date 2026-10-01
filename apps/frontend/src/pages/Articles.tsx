@@ -15,6 +15,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Trophy,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
@@ -68,6 +69,7 @@ function Sidebar() {
           {item('Dashboard', '/dashboard', LayoutDashboard)}
           {item('Events', '/events', Calendar)}
           {item('Articles', '/articles', Newspaper, true)}
+          {item('Achievements', '/achievements', Trophy)}
         </nav>
       </div>
       <button
