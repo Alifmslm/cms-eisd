@@ -9,7 +9,7 @@
 
 - [x] 2.1 Create `lib/achievements.ts` (types, fetchers for list/get/create/update/delete, filter params) matching the spec DTO contract and verify with `tsc --noEmit` / frontend typecheck passing.
 - [x] 2.2 Build `Achievements` list page (search + category/level/result/year filters, year-month sort, pagination, delete-confirm dialog) with `admin`-only create/edit/delete controls and verify by rendering list with mock data showing filters narrow results and `user` role hides write actions.
-- [ ] 2.3 Build `AchievementForm` page (multi-name input, 4-letter code with uppercase transform, category dropdown + conditional Other text field, level/result dropdowns, competition name, required `type=month` year-month input, inline validation) and verify by submitting valid + invalid inputs showing field errors for empty names, bad code, Other-without-text, and bad month.
+- [x] 2.3 Build `AchievementForm` page (multi-name input, 4-letter code with uppercase transform, category dropdown + conditional Other text field, level/result dropdowns, competition name, required `type=month` year-month input, inline validation) and verify by submitting valid + invalid inputs showing field errors for empty names, bad code, Other-without-text, and bad month.
 - [ ] 2.4 Add routes `/achievements`, `/achievements/new`, `/achievements/:id/edit` behind `ProtectedRoute` and sidebar Achievements entry (Trophy icon) on all pages; verify by navigating to each route as authenticated user and sidebar link lands on `/achievements`.
 - [ ] 2.5 Add dashboard Total-achievements KPI card (total + Finalist + Champion breakdown) and extend `DashboardResponse` type; verify against mock stats showing correct totals and `?? 0` empty state.
 
