@@ -2,8 +2,8 @@
 
 ## 1. Schema, Migration & Seeds
 
-- [ ] 1.1 Add `Achievement` Prisma model (memberNames String[], assistantCode, category, customCategory?, level, result, competitionName, competitionYearMonth `YYYY-MM`, timestamps + indexes including competitionYearMonth) and create migration via `prisma migrate dev --name add-achievement`; verify with `prisma validate` and `prisma generate` succeeding.
-- [ ] 1.2 Add idempotent seed rows (5 samples with distinct year-months covering Hackathon/Champion/International, UI-UX/Finalist/National, Essay/2nd Place, SE/1st Place, Other+custom text) and verify with seed script run showing rows in DB (`prisma studio` or `SELECT count(*) FROM "Achievement"` returns 5).
+- [x] 1.1 Add `Achievement` Prisma model (memberNames String[], assistantCode, category, customCategory?, level, result, competitionName, competitionYearMonth `YYYY-MM`, timestamps + indexes including competitionYearMonth) and create migration via `prisma migrate dev --name add-achievement`; verify with `prisma validate` and `prisma generate` succeeding.
+- [x] 1.2 Add idempotent seed rows (5 samples with distinct year-months covering Hackathon/Champion/International, UI-UX/Finalist/National, Essay/2nd Place, SE/1st Place, Other+custom text) and verify with seed script run showing rows in DB (`prisma studio` or `SELECT count(*) FROM "Achievement"` returns 5).
 
 ## 2. Frontend (Pages, Sidebar, Dashboard KPI)
 
