@@ -6,6 +6,9 @@ import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Events } from './pages/Events'
 import { Articles } from './pages/Articles'
+import { Achievements } from './pages/Achievements'
+import { AchievementForm } from './pages/AchievementForm'
+import { SidebarBgPrototype } from './pages/prototype/SidebarBg'
 import { ArticleForm } from './pages/ArticleForm'
 import { EventForm } from './pages/EventForm'
 
@@ -66,6 +69,32 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <Achievements />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/achievements/new"
+            element={
+              <ProtectedRoute>
+                <AchievementForm mode="create" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/achievements/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AchievementForm mode="edit" />
+              </ProtectedRoute>
+            }
+          />
+          {/* PROTOTYPE route — throwaway, do not ship. */}
+          <Route path="/prototype/sidebar-bg" element={<SidebarBgPrototype />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

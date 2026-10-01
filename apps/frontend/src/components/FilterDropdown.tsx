@@ -75,14 +75,14 @@ export function FilterDropdown<T extends string>({
                   onPick(o)
                   setOpen(false)
                 }}
-                className={`flex w-full items-center justify-between gap-4 rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                className={`flex w-full items-center gap-4 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors ${
                   selected
                     ? 'bg-secondary/10 font-semibold text-foreground'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 {o}
-                {selected && <Check className="size-3.5 text-secondary" />}
+                {selected && <Check className="ml-auto size-3.5 shrink-0 text-secondary" />}
               </button>
             )
           })}

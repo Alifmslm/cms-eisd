@@ -31,6 +31,10 @@ export interface DashboardResponse {
   upcomingEventsList: DashboardEvent[]
   latestEvents: DashboardEvent[]
   latestArticles: DashboardArticle[]
+  totalAchievements: number
+  finalistAchievements: number
+  championAchievements: number
+  achievementsByYear: Record<string, number>
 }
 
 export async function fetchDashboard(): Promise<DashboardResponse> {

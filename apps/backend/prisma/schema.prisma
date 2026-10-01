@@ -106,3 +106,31 @@ model MediumArticle {
   @@index([url])
   @@index([publishedAt])
 }
+
+model Achievement {
+  id                   String              @id @default(uuid())
+  category             String
+  customCategory       String?
+  level                String
+  result               String
+  competitionName      String
+  competitionYearMonth String
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  members              AchievementMember[]
+
+  @@index([category])
+  @@index([level])
+  @@index([result])
+  @@index([competitionYearMonth])
+}
+
+model AchievementMember {
+  id            String      @id @default(uuid())
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  name          String
+  assistantCode String      @unique
+
+  @@index([achievementId])
+}

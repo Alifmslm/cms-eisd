@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom'
 import {
   Calendar,
   ChevronRight,
-  FileText,
   FlaskConical,
   LayoutDashboard,
   LogOut,
   Newspaper,
   Plus,
+  Trophy,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
@@ -46,6 +46,16 @@ const MOCK_DASHBOARD: DashboardResponse = {
   publishedArticles: 2,
   draftArticles: 1,
   upcomingEvents: 2,
+  totalAchievements: 5,
+  finalistAchievements: 1,
+  championAchievements: 4,
+  achievementsByYear: {
+    '2026-09': 1,
+    '2026-05': 1,
+    '2026-02': 1,
+    '2025-11': 1,
+    '2025-08': 1,
+  },
   upcomingEventsList: [
     {
       id: 'evt-mock-1',
@@ -112,6 +122,7 @@ const NAV = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, active: true },
   { label: 'Events', to: '/events', icon: Calendar, active: false },
   { label: 'Articles', to: '/articles', icon: Newspaper, active: false },
+  { label: 'Achievements', to: '/achievements', icon: Trophy, active: false },
 ]
 
 const PAGE_SIZE = 5
@@ -137,7 +148,7 @@ function Sidebar() {
   const { signOut } = useAuth()
 
   return (
-    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-[#FAFAFA] p-3">
+    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-white p-3">
       <div className="flex items-center gap-2 px-1">
         <span className="grid size-7 place-items-center rounded-md bg-secondary text-secondary-foreground">
           <FlaskConical className="size-3.5" />
@@ -152,7 +163,7 @@ function Sidebar() {
               key={item.label}
               to={item.to}
               className={`relative flex h-8 items-center gap-2 rounded-md px-2 pl-3 text-[13px] font-medium ${
-                item.active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted'
+                item.active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-[#F5F5F5]'
               }`}
             >
               {item.active && (
@@ -450,13 +461,13 @@ export function Dashboard() {
       ],
     },
     {
-      label: 'Drafts',
-      value: (dashboard?.draftEvents ?? 0) + (dashboard?.draftArticles ?? 0),
-      icon: FileText,
-      tileClassName: 'bg-cyan-600 text-white',
+      label: 'Total achievements',
+      value: dashboard?.totalAchievements ?? 0,
+      icon: Trophy,
+      tileClassName: 'bg-violet-500 text-white',
       breakdown: [
-        { dot: 'bg-[#F59E0B]', label: 'Events', value: dashboard?.draftEvents ?? 0 },
-        { dot: 'bg-[#494CA0]', label: 'Articles', value: dashboard?.draftArticles ?? 0 },
+        { dot: 'bg-[#00D97A]', label: 'Champions', value: dashboard?.championAchievements ?? 0 },
+        { dot: 'bg-[#F59E0B]', label: 'Finalists', value: dashboard?.finalistAchievements ?? 0 },
       ],
     },
   ]

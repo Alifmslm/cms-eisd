@@ -8,16 +8,16 @@ Organization member competition wins (hackathons, UI/UX, essay, software enginee
 
 - Add `Achievement` Prisma model + migration + seed examples covering all fields below.
 - Add admin-only CRUD API `GET /api/achievements`, `POST /api/achievements`, `PUT /api/achievements/:id`, `DELETE /api/achievements/:id` behind existing `AuthenticatedGuard` + `RolesGuard('admin')` (read allowed for authenticated `user` role; writes return 403 for `user`).
-- Add Achievements list page with search/filter, create/edit form, delete confirmation; multi-name input, 4-letter assistant-code input, category dropdown (Essay, UI/UX Competition, Software Engineering, Hackathon, Other + free-text when Other), level dropdown (International, National), achievement-result dropdown (Champion, 1st/2nd/3rd Place, Finalist, etc.), competition-name text field, required competition year-month (`YYYY-MM`) month input, year/year-month filter + sort by year-month.
+- Add Achievements list page with search/filter, create/edit form, delete confirmation; per-member name + own 4-letter assistant-code inputs (codes unique across all records), category dropdown (Essay, UI/UX Competition, Software Engineering, Hackathon, Other + free-text when Other), level dropdown (International, National), achievement-result dropdown (1st/2nd/3rd Place, Finalist), competition-name text field, required competition year-month (`YYYY-MM`) month input, year/year-month filter + sort by year-month.
 - Add sidebar navigation entry "Achievements" on Dashboard/Events/Articles/Achievements pages linking to `/achievements`.
-- Extend `GET /api/dashboard` stats and Dashboard UI with a "Total achievements" KPI card showing breakdown: Finalist count and Champion count, plus per-year counts ready for a future yearly chart.
+- Extend `GET /api/dashboard` stats and Dashboard UI with a "Total achievements" KPI card showing breakdown: Champions count (1st–3rd Place wins) and Finalist count, plus per-year counts ready for a future yearly chart.
 - Frontend API client `lib/achievements.ts`, routes `/achievements`, `/achievements/new`, `/achievements/:id/edit` behind `ProtectedRoute`.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `achievements`: member achievement records lifecycle — create, list/search/filter, update, delete, field validation (names, 4-letter assistant code, category + other-text, level, result, competition name, required competition year-month `YYYY-MM`), year filter/sort, role-gated writes, seed data.
+- `achievements`: member achievement records lifecycle — create, list/search/filter, update, delete, field validation (per-member names with own unique 4-letter assistant codes, category + other-text, level, result without Champion, competition name, required competition year-month `YYYY-MM`), year filter/sort, role-gated writes, seed data.
 
 ### Modified Capabilities
 

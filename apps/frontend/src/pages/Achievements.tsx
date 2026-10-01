@@ -2,13 +2,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
+  Award,
   Calendar,
-  Eye,
-  FileText,
   FlaskConical,
   LayoutDashboard,
   LogOut,
-  MapPin,
+  Medal,
   Newspaper,
   Pencil,
   Plus,
@@ -34,21 +33,39 @@ import {
 import { FilterDropdown } from '@/components/FilterDropdown'
 import { useAuth } from '@/context/useAuth'
 import {
-  fetchAdminEvents,
-  formatShort,
-  getEventStatus,
-  togglePublishState,
-  type AdminEvent,
-  type EventStatus,
-} from '@/lib/events'
+  effectiveCategory,
+  isChampion,
+  memberNames,
+  type Achievement,
+  type AchievementCategory,
+  type AchievementLevel,
+  type AchievementResult,
+} from '@/lib/achievements'
+import { MOCK_ACHIEVEMENTS } from '@/mocks/achievements.fixtures'
 
-type StatusFilter = 'All' | EventStatus
-type PublishFilter = 'All' | 'Published' | 'Draft'
+type LevelFilter = 'All' | AchievementLevel
+type ResultFilter = 'All' | AchievementResult
+type CategoryFilter = 'All' | AchievementCategory
 
-const STATUS_FILTERS: StatusFilter[] = ['All', 'Incoming', 'On Going', 'Finished']
-const PUBLISH_FILTERS: PublishFilter[] = ['All', 'Published', 'Draft']
+const CATEGORY_FILTERS: CategoryFilter[] = [
+  'All',
+  'Essay',
+  'UI/UX Competition',
+  'Software Engineering',
+  'Hackathon',
+  'Other',
+]
+const LEVEL_FILTERS: LevelFilter[] = ['All', 'International', 'National']
+const RESULT_FILTERS: ResultFilter[] = ['All', '1st Place', '2nd Place', '3rd Place', 'Finalist']
 
 const PAGE_SIZE = 5
+
+function formatMonth(ym: string): string {
+  const [y, m] = ym.split('-')
+  const date = new Date(Number(y), Number(m) - 1, 1)
+  if (Number.isNaN(date.getTime())) return ym
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
 
 function Sidebar() {
   const { signOut } = useAuth()
@@ -80,9 +97,9 @@ function Sidebar() {
         <p className="px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Menu</p>
         <nav className="mt-1 flex flex-col gap-0.5">
           {item('Dashboard', '/dashboard', LayoutDashboard)}
-          {item('Events', '/events', Calendar, true)}
+          {item('Events', '/events', Calendar)}
           {item('Articles', '/articles', Newspaper)}
-          {item('Achievements', '/achievements', Trophy)}
+          {item('Achievements', '/achievements', Trophy, true)}
         </nav>
       </div>
       <button
@@ -97,72 +114,73 @@ function Sidebar() {
   )
 }
 
-function ComputedBadge({ status }: { status: EventStatus }) {
-  if (status === 'Incoming') return <Badge variant="info-light">Incoming</Badge>
-  if (status === 'On Going') return <Badge variant="warning-light">On Going</Badge>
-  return <Badge variant="success-light">Finished</Badge>
+function ResultBadge({ result }: { result: string }) {
+  if (result === '1st Place' || result === '2nd Place' || result === '3rd Place')
+    return <Badge variant="success-light">{result}</Badge>
+  if (result === 'Finalist') return <Badge variant="warning-light">{result}</Badge>
+  return <Badge variant="info-light">{result}</Badge>
 }
 
-function PublishBadge({ published }: { published: boolean }) {
-  return published ? (
-    <Badge variant="success-light">Published</Badge>
-  ) : (
-    <Badge variant="warning-light">Draft</Badge>
-  )
-}
-
-export function Events() {
-  const [events, setEvents] = useState<AdminEvent[]>([])
+export function Achievements() {
+  // TEMP (disable-auth-for-fe-testing): mock mode like Events/Articles —
+  // all actions visible without a session. Real role-gating + backend
+  // enforcement land with the API wiring (tasks 3.1/3.3).
+  const [achievements, setAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(true)
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
-  const [publishFilter, setPublishFilter] = useState<PublishFilter>('All')
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All')
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>('All')
+  const [resultFilter, setResultFilter] = useState<ResultFilter>('All')
+  const [yearFilter, setYearFilter] = useState<string>('All')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
-  // 11.7 prototype: deletion is confirmed then applied in memory only.
-  const [pendingDelete, setPendingDelete] = useState<AdminEvent | null>(null)
+  // Prototype: deletion is confirmed then applied in memory only.
+  // DELETE /api/achievements/:id lands with the real API (task 3.1/3.3).
+  const [pendingDelete, setPendingDelete] = useState<Achievement | null>(null)
 
   useEffect(() => {
     let live = true
-    ;(async () => {
-      const data = await fetchAdminEvents()
+    // Prototype: fixtures first; task 3.3 wires fetchAchievements() here.
+    const t = setTimeout(() => {
       if (live) {
-        setEvents(data)
+        setAchievements(MOCK_ACHIEVEMENTS)
         setLoading(false)
       }
-    })()
+    }, 0)
     return () => {
       live = false
+      clearTimeout(t)
     }
   }, [])
 
-  // Dashboard-style stat cards: totals split by computed status.
-  const stats = useMemo(() => {
-    let live = 0
-    for (const e of events) if (e.publishedAt !== null) live += 1
-    return [
-      { label: 'Total events', value: events.length, icon: Calendar, tileClassName: 'bg-amber-500 text-white' },
-      { label: 'Live', value: live, icon: Eye, tileClassName: 'bg-emerald-500 text-white' },
-      { label: 'Drafts', value: events.length - live, icon: FileText, tileClassName: 'bg-cyan-600 text-white' },
-    ]
-  }, [events])
+  const yearOptions = useMemo(() => {
+    const years = new Set(achievements.map((a) => a.competitionYearMonth.slice(0, 4)))
+    return ['All', ...[...years].sort((a, b) => b.localeCompare(a))]
+  }, [achievements])
 
-  // FLIP reorder animation: row elements by id. Positions are compared on
-  // every visible-order change (toggle, filter, search, page), so moved rows
-  // always glide instead of jumping.
+  // Dashboard-style stat cards: total split into champion / finalist detail.
+  const stats = useMemo(() => {
+    let champions = 0
+    let finalists = 0
+    for (const a of achievements) {
+      if (isChampion(a)) champions += 1
+      else if (a.result === 'Finalist') finalists += 1
+    }
+    return [
+      { label: 'Total achievements', value: achievements.length, icon: Trophy, tileClassName: 'bg-amber-500 text-white' },
+      { label: 'Champions', value: champions, icon: Medal, tileClassName: 'bg-emerald-500 text-white' },
+      { label: 'Finalists', value: finalists, icon: Award, tileClassName: 'bg-cyan-600 text-white' },
+    ]
+  }, [achievements])
+
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>())
   const prevRects = useRef(new Map<string, DOMRect>())
 
-  // 11.6 prototype: optimistic in-memory flip. No backend call yet —
-  // POST `:id/publish` / `:id/unpublish` lands with the real API.
-  const togglePublish = (id: string) =>
-    setEvents((prev) => prev.map((e) => (e.id === id ? togglePublishState(e) : e)))
-
-  // 11.7 prototype: confirmed deletion, in memory only (DELETE /api/events/:id
-  // lands with the real API, including R2 image cleanup per task 6.3).
+  // Prototype: confirmed deletion, in memory only (DELETE /api/achievements/:id
+  // lands with the real API).
   const confirmDelete = () => {
     if (!pendingDelete) return
-    const title = pendingDelete.title
-    setEvents((prev) => prev.filter((e) => e.id !== pendingDelete.id))
+    const title = pendingDelete.competitionName
+    setAchievements((prev) => prev.filter((a) => a.id !== pendingDelete.id))
     setPendingDelete(null)
     toast.success(`“${title}” was deleted.`)
   }
@@ -178,42 +196,31 @@ export function Events() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const nowTs = Date.now()
-    return events
-      .filter((e) => (statusFilter === 'All' ? true : getEventStatus(e) === statusFilter))
-      .filter((e) => {
-        if (publishFilter === 'Published') return e.publishedAt !== null
-        if (publishFilter === 'Draft') return e.publishedAt === null
-        return true
-      })
-      .filter((e) =>
-        q ? `${e.title} ${e.slug} ${e.location}`.toLowerCase().includes(q) : true,
+    return achievements
+      .filter((a) => (categoryFilter === 'All' ? true : a.category === categoryFilter))
+      .filter((a) => (levelFilter === 'All' ? true : a.level === levelFilter))
+      .filter((a) => (resultFilter === 'All' ? true : a.result === resultFilter))
+      .filter((a) =>
+        yearFilter === 'All' ? true : a.competitionYearMonth.startsWith(yearFilter),
       )
-      .sort((a, b) => {
-        // Drafts first, then live.
-        const draftDelta =
-          (a.publishedAt === null ? 0 : 1) - (b.publishedAt === null ? 0 : 1)
-        if (draftDelta !== 0) return draftDelta
-        // Past events (already ended) sink to the last.
-        const pastDelta =
-          (+new Date(a.endDate) < nowTs ? 1 : 0) - (+new Date(b.endDate) < nowTs ? 1 : 0)
-        if (pastDelta !== 0) return pastDelta
-        if (+new Date(a.endDate) < nowTs) {
-          // Both past: recently ended first.
-          return +new Date(b.endDate) - +new Date(a.endDate)
-        }
-        // Upcoming/ongoing: nearest start first.
-        return (
-          +new Date(a.startDate) - +new Date(b.startDate) ||
-          +new Date(b.updatedAt) - +new Date(a.updatedAt)
-        )
-      })
-  }, [events, statusFilter, publishFilter, query])
+      .filter((a) =>
+        q
+          ? `${a.competitionName} ${memberNames(a).join(' ')} ${a.members.map((m) => m.assistantCode).join(' ')}`
+              .toLowerCase()
+              .includes(q)
+          : true,
+      )
+      .sort(
+        (a, b) =>
+          b.competitionYearMonth.localeCompare(a.competitionYearMonth) ||
+          +new Date(b.updatedAt) - +new Date(a.updatedAt),
+      )
+  }, [achievements, categoryFilter, levelFilter, resultFilter, yearFilter, query])
 
   // Reset to the first page whenever the visible set changes.
   useEffect(() => {
     setPage(0)
-  }, [statusFilter, publishFilter, query])
+  }, [categoryFilter, levelFilter, resultFilter, yearFilter, query])
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pages - 1)
@@ -233,11 +240,9 @@ export function Events() {
           .sort((a, b) => (a as number) - (b as number))
           .flatMap((n, i, a) => (i > 0 && (n as number) - (a[i - 1] as number) > 1 ? (['gap', n] as (number | 'gap')[]) : [n]))
 
-  // FLIP playback: after the visible order changes (toggle, filter,
-  // search), glide each surviving row from its previous position to its new
-  // one. Page changes are excluded — remounted rows already cascade in via
-  // CSS, so animating them again would double up. Transform-only (GPU),
-  // WAAPI so a second change mid-flight retargets instead of restarting.
+  // FLIP playback: after the visible order changes (filter, search), glide
+  // each surviving row from its previous position to its new one. Page
+  // changes are excluded — remounted rows already cascade in via CSS.
   const prevPage = useRef(safePage)
   useLayoutEffect(() => {
     const next = new Map<string, DOMRect>()
@@ -268,12 +273,12 @@ export function Events() {
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold">Events</h1>
-            <p className="text-sm text-muted-foreground">Schedules and publish states</p>
+            <h1 className="text-2xl font-semibold">Achievements</h1>
+            <p className="text-sm text-muted-foreground">Competition wins and finalist records</p>
           </div>
-          <Link to="/events/new">
+          <Link to="/achievements/new">
             <Button className="text-white">
-              <Plus className="size-4" /> New event
+              <Plus className="size-4" /> New achievement
             </Button>
           </Link>
         </div>
@@ -313,37 +318,51 @@ export function Events() {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search title, slug, location…"
-                  aria-label="Search events"
+                  placeholder="Search competition, member, code…"
+                  aria-label="Search achievements"
                   className="pl-8"
                 />
               </div>
               <span className="hidden h-5 w-px bg-border sm:block" />
               <FilterDropdown
-                label="Status"
-                value={statusFilter}
-                options={STATUS_FILTERS}
-                onPick={setStatusFilter}
+                label="Category"
+                value={categoryFilter}
+                options={CATEGORY_FILTERS}
+                onPick={setCategoryFilter}
               />
               <span className="hidden h-5 w-px bg-border sm:block" />
               <FilterDropdown
-                label="Publish"
-                value={publishFilter}
-                options={PUBLISH_FILTERS}
-                onPick={setPublishFilter}
+                label="Level"
+                value={levelFilter}
+                options={LEVEL_FILTERS}
+                onPick={setLevelFilter}
+              />
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Result"
+                value={resultFilter}
+                options={RESULT_FILTERS}
+                onPick={setResultFilter}
+              />
+              <span className="hidden h-5 w-px bg-border sm:block" />
+              <FilterDropdown
+                label="Year"
+                value={yearFilter}
+                options={yearOptions}
+                onPick={setYearFilter}
                 align="right"
               />
             </div>
 
             {loading ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">Loading events…</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">Loading achievements…</p>
             ) : filtered.length === 0 ? (
               <div className="py-4">
                 <Alert>
-                  <AlertTitle>No events match</AlertTitle>
+                  <AlertTitle>No achievements match</AlertTitle>
                   <AlertDescription>
-                    {events.length === 0
-                      ? 'Create your first event to see it here.'
+                    {achievements.length === 0
+                      ? 'Create your first achievement to see it here.'
                       : 'Try clearing the search or choosing a different filter.'}
                   </AlertDescription>
                 </Alert>
@@ -351,109 +370,74 @@ export function Events() {
             ) : (
               <>
               <div className="overflow-x-auto overflow-y-clip">
-                <table className="w-full min-w-[720px] text-sm">
+                <table className="w-full min-w-[760px] text-sm">
                   <thead>
                     <tr className="text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                      <th className="pb-2 font-medium">Event</th>
-                      <th className="pb-2 font-medium">Schedule</th>
-                      <th className="pb-2 font-medium">Status</th>
-                      <th className="pb-2 text-right font-medium">Publish</th>
-                      <th className="w-44 pb-2" />
+                      <th className="pb-2 font-medium">Competition</th>
+                      <th className="pb-2 font-medium">Members</th>
+                      <th className="pb-2 text-left font-medium">Category</th>
+                      <th className="pb-2 font-medium">Result</th>
+                      <th className="pb-2 font-medium whitespace-nowrap">Year</th>
+                      <th className="w-24 pb-2" />
                     </tr>
                   </thead>
                   <tbody key={safePage}>
-                    {items.map((e, i) => {
-                      const status = getEventStatus(e)
-                      return (
-                        <tr
-                          key={e.id}
-                          ref={(el) => {
-                            if (el) rowRefs.current.set(e.id, el)
-                            else rowRefs.current.delete(e.id)
-                          }}
-                          style={{ animationDelay: `${i * 40}ms` }}
-                          className="page-row-enter border-t border-border align-middle even:bg-[#F7F9FF]"
-                        >
-                          <td className="max-w-72 py-3 pr-3 pl-2">
-                            <div className="flex min-w-0 flex-col">
-                              <span className="block truncate font-medium">{e.title}</span>
-                              <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-                                <MapPin className="size-3 shrink-0" />
-                                {e.location}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 pr-3 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-                            {formatShort(e.startDate)} → {formatShort(e.endDate)}
-                          </td>
-                          <td className="py-3 pr-3">
-                            <ComputedBadge status={status} />
-                          </td>
-                          <td className="py-3 pr-2 text-right">
-                            <PublishBadge published={e.publishedAt !== null} />
-                          </td>
-                          <td className="py-3 pr-2 text-right">
-                            <span className="inline-flex items-center gap-3">
-                              <button
-                                type="button"
-                                role="switch"
-                                aria-checked={e.publishedAt !== null}
-                                onClick={() => togglePublish(e.id)}
-                                title={
-                                  e.publishedAt !== null
-                                    ? `Unpublish “${e.title}” (back to Draft)`
-                                    : `Publish “${e.title}” (goes live)`
-                                }
-                                aria-label={
-                                  e.publishedAt !== null
-                                    ? `Unpublish ${e.title}`
-                                    : `Publish ${e.title}`
-                                }
-                                className="flex items-center gap-2"
-                              >
-                                <span
-                                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                                    e.publishedAt !== null ? 'bg-success' : 'bg-border'
-                                  }`}
-                                >
-                                  <span
-                                    className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform ${
-                                      e.publishedAt !== null ? 'translate-x-4' : ''
-                                    }`}
-                                  />
-                                </span>
-                                <span
-                                  className={`text-xs font-medium ${
-                                    e.publishedAt !== null
-                                      ? 'text-success-foreground'
-                                      : 'text-muted-foreground'
-                                  }`}
-                                >
-                                  {e.publishedAt !== null ? 'Live' : 'Draft'}
-                                </span>
-                              </button>
-                              <Link
-                                to={`/events/${e.id}/edit`}
-                                title={`Edit “${e.title}”`}
-                                aria-label={`Edit ${e.title}`}
-                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-secondary/10 hover:text-secondary"
-                              >
-                                <Pencil className="size-3.5" />
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => setPendingDelete(e)}
-                                title={`Delete “${e.title}” permanently`}
-                                aria-label={`Delete ${e.title}`}
-                                className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </button>
+                    {items.map((a, i) => (
+                      <tr
+                        key={a.id}
+                        ref={(el) => {
+                          if (el) rowRefs.current.set(a.id, el)
+                          else rowRefs.current.delete(a.id)
+                        }}
+                        style={{ animationDelay: `${i * 40}ms` }}
+                        className="page-row-enter border-t border-border align-middle even:bg-[#F7F9FF]"
+                      >
+                        <td className="max-w-72 py-3 pr-3 pl-2">
+                          <div className="flex min-w-0 flex-col">
+                            <span className="block truncate font-medium">{a.competitionName}</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {a.members.map((m) => `${m.name} (${m.assistantCode})`).join(', ')}
                             </span>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                          </div>
+                        </td>
+                        <td className="max-w-48 py-3 pr-3 text-xs text-muted-foreground">
+                          <span className="block truncate">{a.level}</span>
+                        </td>
+                        <td className="py-3 pr-3 text-left text-xs whitespace-nowrap text-muted-foreground">
+                          {effectiveCategory(a)}
+                          {a.category === 'Other' && (
+                            <span className="ml-1 text-[10px]">(Other)</span>
+                          )}
+                        </td>
+                        <td className="py-3 pr-3">
+                          <ResultBadge result={a.result} />
+                        </td>
+                        <td className="py-3 pr-3 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                          {formatMonth(a.competitionYearMonth)}
+                        </td>
+                        <td className="py-3 pr-2 text-right">
+                          <span className="inline-flex items-center gap-3">
+                            <Link
+                              to={`/achievements/${a.id}/edit`}
+                              title={`Edit “${a.competitionName}”`}
+                              aria-label={`Edit ${a.competitionName}`}
+                              className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-secondary/10 hover:text-secondary"
+                            >
+                              <Pencil className="size-3.5" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setPendingDelete(a)}
+                              title={`Delete “${a.competitionName}” permanently`}
+                              aria-label={`Delete ${a.competitionName}`}
+                              className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -515,24 +499,23 @@ export function Events() {
           <div
             role="alertdialog"
             aria-modal="true"
-            aria-labelledby="delete-event-title"
-            aria-describedby="delete-event-desc"
+            aria-labelledby="delete-achievement-title"
+            aria-describedby="delete-achievement-desc"
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-lg"
           >
-            <h2 id="delete-event-title" className="text-base font-semibold">
-              Delete “{pendingDelete.title}”?
+            <h2 id="delete-achievement-title" className="text-base font-semibold">
+              Delete “{pendingDelete.competitionName}”?
             </h2>
-            <p id="delete-event-desc" className="mt-1.5 text-sm text-muted-foreground">
-              This will permanently remove the event{pendingDelete.publishedAt !== null ? ', including its public page,' : ''}{' '}
-              and its images. This can’t be undone.
+            <p id="delete-achievement-desc" className="mt-1.5 text-sm text-muted-foreground">
+              This will permanently remove the achievement record. This can’t be undone.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="outline" autoFocus onClick={() => setPendingDelete(null)}>
                 Cancel
               </Button>
               <Button variant="destructive" onClick={confirmDelete}>
-                Delete event
+                Delete achievement
               </Button>
             </div>
           </div>

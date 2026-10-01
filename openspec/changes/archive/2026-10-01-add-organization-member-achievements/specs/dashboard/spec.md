@@ -7,7 +7,11 @@ The system SHALL display a Total achievements KPI on the dashboard with Finalist
 
 #### Scenario: KPI display with data
 - **WHEN** user views the dashboard and achievements exist
-- **THEN** system shows total achievements count plus Finalist count (result `Finalist`) and Champion count (result `Champion` or `1st Place`)
+- **THEN** system shows total achievements count plus Champions count (results `1st Place`, `2nd Place`, `3rd Place`) and Finalist count (result `Finalist`)
+
+#### Scenario: KPI row shows only totals
+- **WHEN** user views the dashboard
+- **THEN** system shows exactly three KPI cards (Total events, Total articles, Total achievements) and no Drafts card; draft counts remain visible in the per-card breakdowns
 
 #### Scenario: KPI empty state
 - **WHEN** user views the dashboard with zero achievements

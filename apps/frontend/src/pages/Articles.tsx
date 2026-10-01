@@ -15,6 +15,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Trophy,
 } from 'lucide-react'
 import { Badge } from '@/components/reui/badge'
 import { IconTile } from '@/components/reui/icon-tile'
@@ -43,7 +44,7 @@ function Sidebar() {
       key={label}
       to={to}
       className={`relative flex h-8 items-center gap-2 rounded-md px-2 pl-3 text-[13px] font-medium ${
-        active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted'
+        active ? 'bg-secondary/10 font-semibold text-foreground' : 'text-muted-foreground hover:bg-[#F5F5F5]'
       }`}
     >
       {active && (
@@ -55,7 +56,7 @@ function Sidebar() {
   )
 
   return (
-    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-[#FAFAFA] p-3">
+    <aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-white p-3">
       <div className="flex items-center gap-2 px-1">
         <span className="grid size-7 place-items-center rounded-md bg-secondary text-secondary-foreground">
           <FlaskConical className="size-3.5" />
@@ -68,6 +69,7 @@ function Sidebar() {
           {item('Dashboard', '/dashboard', LayoutDashboard)}
           {item('Events', '/events', Calendar)}
           {item('Articles', '/articles', Newspaper, true)}
+          {item('Achievements', '/achievements', Trophy)}
         </nav>
       </div>
       <button
