@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This project is a **Headless CMS built specifically for a single organization's website**. It exists so an admin can manage dynamic content — starting with Events and Medium Articles — without ever needing to touch or redeploy the public website's own codebase.
+This project is a **Headless CMS built specifically for a single organization's website**. It exists so an admin can manage dynamic content — starting with Events, Medium Articles, and member Achievements — without ever needing to touch or redeploy the public website's own codebase.
 
-Before this CMS, any content update would mean a code change on the public site. This project separates "content" from "code": the admin manages content through a dedicated dashboard, and the public website simply reads whatever has been published, through an API.
+Before this CMS, any content update would mean a code change on the public site. This project separates "content" from "code": the admin manages content through a dedicated dashboard, and the public website simply reads Events, Articles, and Achievements through a read-only API.
 
 ## Overview
 
-- **What it manages (V1):** Events (with images, dates, location, rich description) and references to Medium articles (auto-populated from a pasted URL, no manual data entry).
+- **What it manages (V1):** Events (with images, dates, location, rich description), references to Medium articles (auto-populated from a pasted URL, no manual data entry), and member Achievements (competition records with category, level, result, and per-member assistant codes, summarized on the dashboard).
 - **Who uses it:** a single admin (V1), managing content that then appears on the public-facing organization website.
 - **What it deliberately avoids:**
   - The public website never scrapes Medium directly — the CMS fetches and caches article metadata once, at save time.
@@ -34,7 +34,7 @@ The public website is a read-only consumer of published content — it has no wr
 
 ## Project Status
 
-Currently in the **V1 planning stage**. V1 scope covers Authentication, Dashboard, Event Management, and Medium Article Management. See:
+Currently past planning and into **V1 implementation**. V1 scope covers Authentication, Dashboard, Event Management, Medium Article Management, and Achievement Management. Achievements are specified in [`openspec/specs/achievements/`](./openspec/specs/achievements/) with database schema plus seeds and a mock-mode frontend; the backend API is still pending. See:
 
 - [`PLAN_V1.md`](./PLAN_V1.md) — the detailed V1 product requirements and information architecture.
 - [`ROADMAP.md`](./ROADMAP.md) — the rough plan from V1 through V4.
@@ -50,7 +50,7 @@ Technology stack decisions are intentionally excluded from this documentation fo
 The CMS supports two user roles:
 
 ### Admin Role
-- Full CRUD access to all content (events, articles)
+- Full CRUD access to all content (events, articles, achievements)
 - Can create, edit, and delete content
 - Can publish and unpublish content
 - Can manage user roles
