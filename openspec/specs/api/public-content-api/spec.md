@@ -1,6 +1,6 @@
 ## Purpose
 
-Provides read-only API endpoints for the public website to consume published events and articles.
+Provides read-only API endpoints for the public website to consume published events and articles, and member achievements.
 
 ## Requirements
 
@@ -32,6 +32,21 @@ The system SHALL provide an API endpoint to retrieve published Medium articles.
 
 #### Scenario: Article not found
 - **WHEN** public website requests a non-existent or unpublished article
+- **THEN** system returns 404 status
+
+### Requirement: Public achievements endpoint
+The system SHALL provide an API endpoint to retrieve member achievements.
+
+#### Scenario: List achievements
+- **WHEN** public website requests GET /api/achievements
+- **THEN** system returns all achievement records with no published filter, since records are public once created
+
+#### Scenario: Get single achievement
+- **WHEN** public website requests GET /api/achievements/:id
+- **THEN** system returns the achievement matching the ID
+
+#### Scenario: Achievement not found
+- **WHEN** public website requests a non-existent achievement
 - **THEN** system returns 404 status
 
 ### Requirement: API response format
