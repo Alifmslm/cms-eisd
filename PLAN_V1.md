@@ -3,11 +3,11 @@
 
 ## 1. Overview
 
-V1 delivers a minimal, stable Headless CMS for a single organization's website. Its sole job is to let an admin manage two content types — **Event** and **Medium Article** — through a dashboard, without ever touching the public website's codebase. The public website consumes this content through an API; it never scrapes external sources and never stores media itself.
+V1 delivers a minimal, stable Headless CMS for a single organization's website. Its sole job is to let an admin manage three content types — **Event**, **Medium Article**, and **Achievement** — through a dashboard, without ever touching the public website's codebase. Events, Medium Articles, and Achievements are served to the public website through a read-only API; it never scrapes external sources and never stores media itself.
 
 ## 2. Goals
 
-- Give the admin a single place to create, edit, and publish Events and Medium Article references.
+- Give the admin a single place to create, edit, and publish Events and Medium Article references, and to record member Achievements.
 - Keep the data model simple now, but shaped so V2–V4 features (Gallery, Pengurus, Divisi, Program Kerja, Roles, Audit Log, AI tooling) can be added without breaking changes or large migrations.
 - Decouple the public website from any scraping or file-storage responsibility.
 - Ship something small enough to finish quickly and boring enough to be reliable.
@@ -30,6 +30,7 @@ V1 is "done" when an admin can, unassisted:
 4. Add a Medium article by pasting only its URL and have title/cover/description/date populate automatically.
 5. Publish, edit, or delete that Medium article entry.
 6. Trust that Event status (Incoming / On Going / Finished) is always correct without manual updates.
+7. Record a member Achievement (competition, members, result), edit or delete it later, see achievement totals reflected on the dashboard, and have it served on the public site.
 
 ## 5. High-Level Architecture (conceptual, stack-agnostic)
 
@@ -50,7 +51,7 @@ Key architectural decisions carried over from the draft:
 - The public website **never scrapes Medium** — metadata is fetched once, at save time, by the CMS backend, and cached in the database.
 - Images are **never stored on the application server** — they go to object storage, and the database stores only references (URLs/IDs).
 - Event status is **computed, not stored as an editable field** — it's derived from `startDate`/`endDate` against the current date.
-- The public website only ever reads **published** content.
+- The public website only ever reads content through the read-only API: Events and Articles only when published; Achievements as soon as they are created (no draft gate).
 
 ## 6. Core Features
 
@@ -71,6 +72,7 @@ A single landing screen summarizing CMS state at a glance:
 
 - **Total Events** — count of all events regardless of status.
 - **Total Articles** — count of all Medium article entries.
+- **Total Achievements** — count of all member achievement records, with a Champions (1st/2nd/3rd Place) vs. Finalist breakdown.
 - **Upcoming Events** — events whose computed status is "Incoming," short list, soonest first.
 - **Latest Events** — most recently created/updated events, regardless of status.
 
@@ -132,6 +134,29 @@ Empty states matter here: if there are zero events or articles, the dashboard sh
 
 **Workflow:** Draft → Publish, same pattern as Events (the draft doc doesn't list Draft explicitly for articles, but the IA section includes "Publish" as an action, implying a draft state exists here too — recommend keeping the same two-state model as Events for consistency).
 
+### 6.5 Achievement Management
+
+**Admin input:** a competition record with one or more members. Each member has a name and their own unique 4-letter assistant code (stored uppercase).
+
+**Fields**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| Members | member array | yes | 1+ entries; each a name plus a 4-letter assistant code unique within and across all records. |
+| Category | enum | yes | Essay, UI/UX Competition, Software Engineering, Hackathon, or Other (custom text required when Other). |
+| Level | enum | yes | International or National. |
+| Result | enum | yes | 1st Place, 2nd Place, 3rd Place, or Finalist (podium finishes count as Champions on the dashboard). |
+| Competition Name | text | yes | Free text. |
+| Competition Year-Month | month (`YYYY-MM`) | yes | Used for ordering (newest first) and year filtering. |
+
+**Workflow**
+
+- Achievements have **no Draft/Publish state** — a created record is immediately visible in the CMS and served on the public site (unlike Events and Articles, which gate on `publishedAt`).
+- **List** supports search (competition/member name) and filters (category, level, result, year, year-month), ordered by competition year-month descending.
+- **Create / Edit** share the same validation (duplicate assistant code → conflict error, not a silent overwrite).
+- **Delete** removes the record entirely, with a confirmation step.
+- Detailed behavior lives in `openspec/specs/achievements/`.
+
 ## 7. Business Rules
 
 **Event status (computed on every read, not stored):**
@@ -164,6 +189,11 @@ Dashboard
 │   ├── Edit
 │   ├── Delete
 │   └── Publish
+├── Achievements
+│   ├── List
+│   ├── Create
+│   ├── Edit
+│   └── Delete
 └── Profile
 ```
 
@@ -172,7 +202,7 @@ Dashboard
 ## 9. Mandatory Cross-Cutting Features
 
 - **Automatic slug generation** — see business rules above.
-- **Draft & Publish workflow** — applies to both Event and Medium Article.
+- **Draft & Publish workflow** — applies to Event and Medium Article. Achievements have no draft state; created records are immediately visible.
 - **Upload progress** — any image upload shows progress feedback; large galleries (up to 4 images) shouldn't feel like a frozen screen.
 - **File size validation** — reject oversized images before upload starts, with a clear limit shown to the admin.
 - **Image ratio validation** — Cover Image must be validated as 16:9 before it's accepted; Header/Gallery images need their own defined constraints (not specified in the draft — recommend defining explicit target ratios for each before build).
@@ -194,6 +224,14 @@ id, url, title, description, coverImage, publishedDate,
 createdAt, updatedAt
 ```
 
+**Achievement** (with members as a child relation)
+```
+id, category, customCategory?, level, result,
+competitionName, competitionYearMonth,
+createdAt, updatedAt
+members[]: { name, assistantCode (unique) }
+```
+
 Both entities carry `createdAt`/`updatedAt` for basic traceability even without full audit logging, and both are structured to accept a `publishedAt`-style field so V3's "Scheduled Publish" can slot in later without restructuring.
 
 ## 11. Assumptions & Items to Confirm
@@ -205,3 +243,4 @@ These aren't blockers, but should be settled before or during build:
 3. Behavior when Medium OG fetch fails or the article is later deleted from Medium.
 4. Exact aspect-ratio/size rules for Header and Gallery images (only Cover Image's 16:9 is specified).
 5. Whether the Medium Article workflow truly needs a Draft state, or "Publish" is the only state transition it has.
+6. Public achievements endpoint is not yet specified or built (no public read in `openspec/specs/api/public-content-api/`, no `publishedAt` on the Achievement model) — needs a follow-up spec plus any schema change before the public site can consume achievements.

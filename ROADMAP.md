@@ -8,11 +8,12 @@ This is a rough, directional plan. Scope and order may shift as V1 ships and rea
 *Goal: a simple, stable base the org can actually run on.*
 
 - Authentication (login, logout, session)
-- Dashboard (totals, upcoming events, latest events)
+- Dashboard (totals, upcoming events, latest events, achievements KPI)
 - Event management (create/edit/delete, Draft → Publish, computed status)
 - Medium Article management (URL-only input, auto-fetched Open Graph metadata, Draft → Publish)
+- Achievement management (member competition records with per-member assistant codes, full CRUD, no draft state)
 
-V1 intentionally excludes anything that isn't needed to get real Event and Article content onto the public site.
+V1 intentionally excludes anything that isn't needed to get real Event, Article, and Achievement content onto the public site.
 
 ---
 
