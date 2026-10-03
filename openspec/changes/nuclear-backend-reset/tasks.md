@@ -13,8 +13,8 @@
 ## 3. Delete the Backend and Clean Workspace References
 
 - [x] 3.1 Delete `apps/backend/` entirely (source, configs, `dist/`, `node_modules/`, `prisma/migrations/`, `seed.ts`), verified by the path no longer existing and `git status` showing the deletion.
-- [ ] 3.2 Prune backend references from `pnpm-workspace.yaml`, root `package.json` scripts, and `docker-compose.yml` (only if it defines app services beyond Postgres; Postgres stays), verified by grepping the repo for `apps/backend` with zero hits outside this change's planning docs and `CHALLENGE.md` narrative.
-- [ ] 3.3 Run a clean install from repo root, verified by the package manager completing with no errors about the missing workspace member.
+- [x] 3.2 Prune backend references from `pnpm-workspace.yaml`, root `package.json` scripts, and `docker-compose.yml` (only if it defines app services beyond Postgres; Postgres stays), verified by grepping the repo for `apps/backend` with zero hits outside this change's planning docs and `CHALLENGE.md` narrative.
+- [x] 3.3 Run a clean install from repo root, verified by the package manager completing with no errors about the missing workspace member.
 
 ## 4. Verify the Starter Boots
 
