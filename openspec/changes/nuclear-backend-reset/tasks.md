@@ -18,8 +18,8 @@
 
 ## 4. Verify the Starter Boots
 
-- [ ] 4.1 Boot only the frontend with no API listening and walk dashboard, events, articles, and achievements pages, verified by all four rendering fixture content with no fatal errors in the console.
-- [ ] 4.2 Bring up Postgres via the documented compose command from a clean state, verified by a successful connection using the credentials the starter docs will specify.
+- [x] 4.1 Boot only the frontend with no API listening and walk dashboard, events, articles, and achievements pages, verified by all four rendering fixture content with no fatal errors in the console.
+- [x] 4.2 Bring up Postgres via the documented compose command from a clean state, verified by a successful connection using the credentials the starter docs will specify.
 
 ## 5. Write the Rebuild Contract
 
