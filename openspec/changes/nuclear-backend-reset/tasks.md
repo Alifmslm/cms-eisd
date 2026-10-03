@@ -2,13 +2,13 @@
 
 ## 1. Preserve the Reference
 
-- [ ] 1.1 Commit any outstanding work so the pre-delete tree is clean, verified by `git status --porcelain` showing no modifications to tracked files outside this change's own artifacts.
-- [ ] 1.2 Create the annotated tag `v1-backend-reference` on the pre-delete commit, verified by `git show v1-backend-reference --stat` listing `apps/backend/src` and `apps/backend/prisma/schema.prisma`.
+- [x] 1.1 Commit any outstanding work so the pre-delete tree is clean, verified by `git status --porcelain` showing no modifications to tracked files outside this change's own artifacts.
+- [x] 1.2 Create the annotated tag `v1-backend-reference` on the pre-delete commit, verified by `git show v1-backend-reference --stat` listing `apps/backend/src` and `apps/backend/prisma/schema.prisma`.
 
 ## 2. Relocate the Schema
 
-- [ ] 2.1 Move `apps/backend/prisma/schema.prisma` to `packages/db/prisma/schema.prisma` with byte-identical content, verified by diffing the moved file against `git show v1-backend-reference:apps/backend/prisma/schema.prisma` with no differences.
-- [ ] 2.2 Confirm all eight models (`User`, `Session`, `Account`, `Verification`, `Event`, `MediumArticle`, `Achievement`, `AchievementMember`) are present in the relocated file, verified by grepping each `model <Name>` declaration.
+- [x] 2.1 Move `apps/backend/prisma/schema.prisma` to `packages/db/prisma/schema.prisma` with byte-identical content, verified by diffing the moved file against `git show v1-backend-reference:apps/backend/prisma/schema.prisma` with no differences.
+- [x] 2.2 Confirm all eight models (`User`, `Session`, `Account`, `Verification`, `Event`, `MediumArticle`, `Achievement`, `AchievementMember`) are present in the relocated file, verified by grepping each `model <Name>` declaration.
 
 ## 3. Delete the Backend and Clean Workspace References
 
