@@ -25,7 +25,7 @@
 
 - [x] 5.1 Derive the endpoint inventory from frontend sources (`lib/api.ts`, `lib/auth-client.ts`, `lib/events.ts`, `lib/articles.ts`, `lib/dashboard.ts`, `lib/achievements.ts`, upload components) plus the `v1-headless-cms` specs, verified by every `/api/*` call found in `apps/frontend/src` appearing in the inventory.
 - [x] 5.2 Write `CHALLENGE.md` at repo root covering: how to run FE on mocks, the schema path and fixed-model note, the full API/auth/role/publish/upload/status contract, stretch marking for achievements, and V1 success criteria as definition of done — verified by checking each item off against the spec scenarios in `specs/backend-starter/spec.md`.
-- [ ] 5.3 Confirm `openspec/specs/` and `PLAN_V1.md` are untouched, verified by `git diff v1-backend-reference -- openspec/specs PLAN_V1.md` showing no changes.
+- [x] 5.3 Confirm `openspec/specs/` and `PLAN_V1.md` are untouched, verified by `git diff v1-backend-reference -- openspec/specs PLAN_V1.md` showing no changes.
 
 ## 6. Final Validation and Commit
 
