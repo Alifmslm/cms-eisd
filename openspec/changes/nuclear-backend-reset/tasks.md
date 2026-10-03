@@ -31,4 +31,5 @@
 
 - [x] 6.1 Run `openspec validate --change nuclear-backend-reset` (strict if available), verified by a passing result with no errors.
 - [x] 6.2 Review the full diff as a learner would see it (`git status`, `git diff --stat`), verified by backend source absent, schema present at its new home, frontend untouched, and `CHALLENGE.md` present.
-- [ ] 6.3 Commit the reset as one atomic commit, verified by `git log --oneline -1` and `git show --stat HEAD` showing the complete reset scope.
+- [x] 6.3 Commit the reset as one atomic commit, verified by `git log --oneline -1` and `git show --stat HEAD` showing the complete reset scope.
+  - Note (accepted deviation): the reset landed incrementally via merged PRs #30–#32 instead of one atomic commit; atomicity was superseded to avoid rewriting shared `main` history. Full scope verified in 6.2 (`v1-backend-reference..HEAD`).
