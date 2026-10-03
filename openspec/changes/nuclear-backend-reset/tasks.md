@@ -2,8 +2,8 @@
 
 ## 1. Preserve the Reference
 
-- [ ] 1.1 Commit any outstanding work so the pre-delete tree is clean, verified by `git status --porcelain` showing no modifications to tracked files outside this change's own artifacts.
-- [ ] 1.2 Create the annotated tag `v1-backend-reference` on the pre-delete commit, verified by `git show v1-backend-reference --stat` listing `apps/backend/src` and `apps/backend/prisma/schema.prisma`.
+- [x] 1.1 Commit any outstanding work so the pre-delete tree is clean, verified by `git status --porcelain` showing no modifications to tracked files outside this change's own artifacts.
+- [x] 1.2 Create the annotated tag `v1-backend-reference` on the pre-delete commit, verified by `git show v1-backend-reference --stat` listing `apps/backend/src` and `apps/backend/prisma/schema.prisma`.
 
 ## 2. Relocate the Schema
 
