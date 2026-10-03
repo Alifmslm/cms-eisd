@@ -7,8 +7,8 @@
 
 ## 2. Relocate the Schema
 
-- [ ] 2.1 Move `apps/backend/prisma/schema.prisma` to `packages/db/prisma/schema.prisma` with byte-identical content, verified by diffing the moved file against `git show v1-backend-reference:apps/backend/prisma/schema.prisma` with no differences.
-- [ ] 2.2 Confirm all eight models (`User`, `Session`, `Account`, `Verification`, `Event`, `MediumArticle`, `Achievement`, `AchievementMember`) are present in the relocated file, verified by grepping each `model <Name>` declaration.
+- [x] 2.1 Move `apps/backend/prisma/schema.prisma` to `packages/db/prisma/schema.prisma` with byte-identical content, verified by diffing the moved file against `git show v1-backend-reference:apps/backend/prisma/schema.prisma` with no differences.
+- [x] 2.2 Confirm all eight models (`User`, `Session`, `Account`, `Verification`, `Event`, `MediumArticle`, `Achievement`, `AchievementMember`) are present in the relocated file, verified by grepping each `model <Name>` declaration.
 
 ## 3. Delete the Backend and Clean Workspace References
 
